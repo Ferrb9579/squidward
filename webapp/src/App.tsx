@@ -8,6 +8,7 @@ import { SensorDetails } from './components/SensorDetails'
 import { SensorList } from './components/SensorList'
 import { ZoneSnapshotList } from './components/ZoneSnapshotList'
 import { AlertCenter } from './components/AlertCenter'
+import { UsageAnalyticsPanel } from './components/UsageAnalyticsPanel'
 import { useEventStream } from './hooks/useEventStream'
 import { useDashboardStore } from './store/dashboardStore'
 
@@ -24,11 +25,14 @@ function App() {
   const isLoading = useDashboardStore((state) => state.isLoading)
   const error = useDashboardStore((state) => state.error)
   const recentEvents = useDashboardStore((state) => state.recentEvents)
+  const analytics = useDashboardStore((state) => state.analytics)
+  const analyticsLoading = useDashboardStore((state) => state.analyticsLoading)
   const alerts = useDashboardStore((state) => state.alerts)
   const alertsLoading = useDashboardStore((state) => state.alertsLoading)
   const loadAlerts = useDashboardStore((state) => state.loadAlerts)
   const acknowledgeAlert = useDashboardStore((state) => state.acknowledgeAlert)
   const resolveAlert = useDashboardStore((state) => state.resolveAlert)
+  const loadAnalytics = useDashboardStore((state) => state.loadAnalytics)
 
   useEffect(() => {
     void initialize()
@@ -53,6 +57,10 @@ function App() {
     void loadAlerts({ status: 'all' })
   }
 
+  const handleRefreshAnalytics = () => {
+    void loadAnalytics()
+  }
+
   return (
     <div className="dashboard">
       <OverviewCards
@@ -75,6 +83,11 @@ function App() {
           <SensorDetails
             sensor={selectedSensor}
             measurements={selectedMeasurements}
+          />
+          <UsageAnalyticsPanel
+            analytics={analytics}
+            isLoading={analyticsLoading}
+            onRefresh={handleRefreshAnalytics}
           />
         </section>
         <aside className="dashboard__sidebar">

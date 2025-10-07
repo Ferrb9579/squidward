@@ -10,6 +10,7 @@ import {
   acknowledgeLeakAlert,
   resolveLeakAlert
 } from '../api/alerts'
+import { fetchUsageAnalytics } from '../api/analytics'
 import { ALERT_LIMIT, MEASUREMENT_LIMIT } from '../config'
 import type {
   LeakAlert,
@@ -18,6 +19,7 @@ import type {
   Measurement,
   OverviewMetrics,
   ReadingEventPayload,
+  UsageAnalytics,
   SensorState,
   StreamStatus,
   ZoneSnapshot
@@ -36,6 +38,8 @@ interface DashboardState {
   recentEvents: LiveEvent[]
   alerts: LeakAlert[]
   alertsLoading: boolean
+  analytics?: UsageAnalytics
+  analyticsLoading: boolean
   initialize: () => Promise<void>
   refreshAggregates: (timestamp?: Date) => Promise<void>
   selectSensor: (sensorId?: string) => void
@@ -45,6 +49,7 @@ interface DashboardState {
   applyAlertEvent: (event: LeakAlertEvent) => void
   acknowledgeAlert: (alertId: string) => Promise<void>
   resolveAlert: (alertId: string) => Promise<void>
+  loadAnalytics: () => Promise<void>
   setStreamStatus: (status: StreamStatus) => void
   setError: (message?: string) => void
 }
@@ -78,15 +83,18 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
   recentEvents: [],
   alerts: [],
   alertsLoading: false,
+  analytics: undefined,
+  analyticsLoading: false,
   initialize: async () => {
     if (get().isLoading) return
-    set({ isLoading: true, error: undefined, alertsLoading: true })
+    set({ isLoading: true, error: undefined, alertsLoading: true, analyticsLoading: true })
     try {
-      const [sensors, overview, zones, alerts] = await Promise.all([
+      const [sensors, overview, zones, alerts, analytics] = await Promise.all([
         fetchSensors(),
         fetchOverviewMetrics(),
         fetchZoneSnapshots(),
-        fetchLeakAlerts({ status: 'all', limit: ALERT_LIMIT })
+        fetchLeakAlerts({ status: 'all', limit: ALERT_LIMIT }),
+        fetchUsageAnalytics()
       ])
 
       const selectedSensorId =
@@ -98,8 +106,10 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
         zones,
         selectedSensorId,
         alerts: clampAlerts(alerts),
+        analytics,
         isLoading: false,
-        alertsLoading: false
+        alertsLoading: false,
+        analyticsLoading: false
       })
 
       if (selectedSensorId) {
@@ -113,20 +123,25 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
             ? error.message
             : 'Unexpected error loading dashboard',
         isLoading: false,
-        alertsLoading: false
+        alertsLoading: false,
+        analyticsLoading: false
       })
     }
   },
   refreshAggregates: async (timestamp?: Date) => {
+    set({ analyticsLoading: true })
     try {
-      const [overview, zones] = await Promise.all([
+      const [overview, zones, analytics] = await Promise.all([
         fetchOverviewMetrics(),
-        fetchZoneSnapshots()
+        fetchZoneSnapshots(),
+        fetchUsageAnalytics()
       ])
       set({
         overview,
         zones,
+        analytics,
         lastCycleAt: timestamp ?? new Date(),
+        analyticsLoading: false,
         error: undefined
       })
     } catch (error) {
@@ -135,7 +150,8 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
         error:
           error instanceof Error
             ? error.message
-            : 'Unable to refresh aggregates'
+            : 'Unable to refresh aggregates',
+        analyticsLoading: false
       })
     }
   },
@@ -266,6 +282,22 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
           error instanceof Error
             ? error.message
             : 'Unable to resolve alert'
+      })
+    }
+  },
+  loadAnalytics: async () => {
+    set({ analyticsLoading: true })
+    try {
+      const analytics = await fetchUsageAnalytics()
+      set({ analytics, analyticsLoading: false, error: undefined })
+    } catch (error) {
+      console.error('Failed to load usage analytics', error)
+      set({
+        analyticsLoading: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Unable to load usage analytics'
       })
     }
   },

@@ -99,3 +99,39 @@ export interface LeakAlertEvent {
   type: LeakAlertEventType
   alert: LeakAlert
 }
+
+export interface HourlyMetricPoint {
+  hour: Date
+  avgFlowLpm?: number
+  avgPressureBar?: number
+  avgLevelPercent?: number
+}
+
+export interface ZoneFlowSummary {
+  zoneId: string
+  zoneName: string
+  avgFlowLpm: number
+  peakFlowLpm: number
+  sensorsReporting: number
+}
+
+export interface ExtremeMeasurement {
+  sensorId: string
+  sensorName: string
+  zone: SensorZone
+  value: number
+  timestamp: Date
+}
+
+export interface UsageAnalytics {
+  windowStart: Date
+  windowEnd: Date
+  hourly: HourlyMetricPoint[]
+  zoneFlow: ZoneFlowSummary[]
+  topFlowEvents: ExtremeMeasurement[]
+  pressureExtremes: {
+    max?: ExtremeMeasurement
+    min?: ExtremeMeasurement
+  }
+  lowReservoirs: ExtremeMeasurement[]
+}

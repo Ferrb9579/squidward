@@ -13,6 +13,7 @@ import {
   markAlertAcknowledged,
   markAlertResolved
 } from '../services/leakAlertService'
+import { getUsageAnalytics } from '../services/analyticsService'
 
 const api = Router()
 
@@ -97,6 +98,14 @@ api.get(
   asyncHandler(async (_req, res) => {
     const overview = await getOverviewMetrics()
     res.json({ overview })
+  })
+)
+
+api.get(
+  '/analytics/usage',
+  asyncHandler(async (_req, res) => {
+    const analytics = await getUsageAnalytics()
+    res.json({ analytics })
   })
 )
 
