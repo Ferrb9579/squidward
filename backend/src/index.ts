@@ -1,14 +1,20 @@
+import type { NextFunction, Request, Response } from 'express'
+import cors from 'cors'
 import express from 'express'
 import { env } from './config/env'
 import { connectToDatabase, disconnectFromDatabase } from './db/connection'
 import { simulator, startSimulator, stopSimulator } from './iot/simulator'
+import apiRouter from './routes/api'
 
 const app = express()
+app.use(cors())
 app.use(express.json())
 
 simulator.on('error', (error) => {
 	console.error('Simulator error', error)
 })
+
+app.use('/api', apiRouter)
 
 app.get('/health', (_req, res) => {
 	res.json({
@@ -17,6 +23,17 @@ app.get('/health', (_req, res) => {
 		timestamp: new Date().toISOString()
 	})
 })
+
+app.use((_req, res) => {
+	res.status(404).json({ message: 'Not Found' })
+})
+
+app.use(
+	(error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+		console.error('API error', error)
+		res.status(500).json({ message: 'Internal server error' })
+	}
+)
 
 const startServer = async () => {
 	try {
