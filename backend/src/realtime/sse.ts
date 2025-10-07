@@ -1,6 +1,10 @@
 import type { Request, Response } from 'express'
 import { simulator } from '../iot/simulator'
 import type { ReadingEventPayload } from '../iot/simulator'
+import {
+  leakDetectionEvents,
+  normalizeAlertPayload
+} from '../services/leakDetectionService'
 
 interface Client {
   id: number
@@ -75,6 +79,13 @@ simulator.on('cycle', (timestamp) => {
 simulator.on('error', (error) => {
   broadcast('simulator-error', {
     message: error instanceof Error ? error.message : 'Unknown error'
+  })
+})
+
+leakDetectionEvents.on('alert', (payload) => {
+  broadcast('leak-alert', {
+    type: payload.type,
+    alert: normalizeAlertPayload(payload.alert)
   })
 })
 
