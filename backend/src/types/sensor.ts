@@ -32,3 +32,10 @@ export interface SensorReading {
   leakDetected?: boolean
   healthScore?: number
 }
+
+export interface SensorState extends SensorMetadata {
+  lastReadingAt?: Date
+  lastValues?: Omit<SensorReading, 'sensorId' | 'timestamp'>
+  createdAt?: Date
+  updatedAt?: Date
+}

@@ -1,9 +1,14 @@
 import express from 'express'
 import { env } from './config/env'
 import { connectToDatabase, disconnectFromDatabase } from './db/connection'
+import { simulator, startSimulator, stopSimulator } from './iot/simulator'
 
 const app = express()
 app.use(express.json())
+
+simulator.on('error', (error) => {
+	console.error('Simulator error', error)
+})
 
 app.get('/health', (_req, res) => {
 	res.json({
@@ -16,6 +21,7 @@ app.get('/health', (_req, res) => {
 const startServer = async () => {
 	try {
 		await connectToDatabase()
+		await startSimulator()
 		app.listen(env.port, () => {
 			console.log(`Backend ready on port ${env.port}`)
 		})
@@ -32,6 +38,7 @@ if (require.main === module) {
 const shutdown = async (signal: NodeJS.Signals) => {
 	console.log(`Received ${signal}. Shutting down gracefully...`)
 	try {
+		await stopSimulator()
 		await disconnectFromDatabase()
 	} finally {
 		process.exit(0)
