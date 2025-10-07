@@ -5,8 +5,15 @@ import {
   fetchSensors,
   fetchZoneSnapshots
 } from '../api/dashboard'
-import { MEASUREMENT_LIMIT } from '../config'
+import {
+  fetchLeakAlerts,
+  acknowledgeLeakAlert,
+  resolveLeakAlert
+} from '../api/alerts'
+import { ALERT_LIMIT, MEASUREMENT_LIMIT } from '../config'
 import type {
+  LeakAlert,
+  LeakAlertEvent,
   LiveEvent,
   Measurement,
   OverviewMetrics,
@@ -27,11 +34,17 @@ interface DashboardState {
   error?: string
   streamStatus: StreamStatus
   recentEvents: LiveEvent[]
+  alerts: LeakAlert[]
+  alertsLoading: boolean
   initialize: () => Promise<void>
   refreshAggregates: (timestamp?: Date) => Promise<void>
   selectSensor: (sensorId?: string) => void
   loadMeasurements: (sensorId: string) => Promise<void>
   applyReading: (payload: ReadingEventPayload) => void
+  loadAlerts: (options?: { status?: 'active' | 'resolved' | 'all' }) => Promise<void>
+  applyAlertEvent: (event: LeakAlertEvent) => void
+  acknowledgeAlert: (alertId: string) => Promise<void>
+  resolveAlert: (alertId: string) => Promise<void>
   setStreamStatus: (status: StreamStatus) => void
   setError: (message?: string) => void
 }
@@ -48,6 +61,11 @@ const clampEvents = (events: LiveEvent[]) =>
     )
     .slice(0, 40)
 
+const clampAlerts = (alerts: LeakAlert[]) =>
+  [...alerts]
+    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+    .slice(0, ALERT_LIMIT)
+
 export const useDashboardStore = create<DashboardState>()((set, get) => ({
   sensors: [],
   measurements: {},
@@ -58,14 +76,17 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
   error: undefined,
   streamStatus: 'idle',
   recentEvents: [],
+  alerts: [],
+  alertsLoading: false,
   initialize: async () => {
     if (get().isLoading) return
-    set({ isLoading: true, error: undefined })
+    set({ isLoading: true, error: undefined, alertsLoading: true })
     try {
-      const [sensors, overview, zones] = await Promise.all([
+      const [sensors, overview, zones, alerts] = await Promise.all([
         fetchSensors(),
         fetchOverviewMetrics(),
-        fetchZoneSnapshots()
+        fetchZoneSnapshots(),
+        fetchLeakAlerts({ status: 'all', limit: ALERT_LIMIT })
       ])
 
       const selectedSensorId =
@@ -76,7 +97,9 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
         overview,
         zones,
         selectedSensorId,
-        isLoading: false
+        alerts: clampAlerts(alerts),
+        isLoading: false,
+        alertsLoading: false
       })
 
       if (selectedSensorId) {
@@ -89,7 +112,8 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
           error instanceof Error
             ? error.message
             : 'Unexpected error loading dashboard',
-        isLoading: false
+        isLoading: false,
+        alertsLoading: false
       })
     }
   },
@@ -173,6 +197,77 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
         recentEvents
       }
     })
+  },
+  loadAlerts: async (options) => {
+    set({ alertsLoading: true })
+    try {
+      const alerts = await fetchLeakAlerts({
+        status: options?.status ?? 'all',
+        limit: ALERT_LIMIT
+      })
+      set({ alerts: clampAlerts(alerts), alertsLoading: false, error: undefined })
+    } catch (error) {
+      console.error('Failed to load leak alerts', error)
+      set({
+        alertsLoading: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Unable to load leak alerts'
+      })
+    }
+  },
+  applyAlertEvent: (event) => {
+    set((state) => {
+      const next = state.alerts.filter((alert) => alert.id !== event.alert.id)
+      next.unshift(event.alert)
+      return {
+        alerts: clampAlerts(next),
+        alertsLoading: false
+      }
+    })
+  },
+  acknowledgeAlert: async (alertId: string) => {
+    try {
+      const updated = await acknowledgeLeakAlert(alertId)
+      set((state) => {
+        const next = state.alerts.filter((alert) => alert.id !== updated.id)
+        next.unshift(updated)
+        return {
+          alerts: clampAlerts(next),
+          error: undefined
+        }
+      })
+    } catch (error) {
+      console.error('Failed to acknowledge alert', error)
+      set({
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Unable to acknowledge alert'
+      })
+    }
+  },
+  resolveAlert: async (alertId: string) => {
+    try {
+      const updated = await resolveLeakAlert(alertId)
+      set((state) => {
+        const next = state.alerts.filter((alert) => alert.id !== updated.id)
+        next.unshift(updated)
+        return {
+          alerts: clampAlerts(next),
+          error: undefined
+        }
+      })
+    } catch (error) {
+      console.error('Failed to resolve alert', error)
+      set({
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Unable to resolve alert'
+      })
+    }
   },
   setStreamStatus: (status) => set({ streamStatus: status }),
   setError: (message) => set({ error: message })

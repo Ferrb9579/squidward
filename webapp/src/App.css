@@ -221,6 +221,9 @@
 }
 
 .panel__body--empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
   justify-content: center;
   align-items: center;
   text-align: center;
@@ -496,6 +499,202 @@
 .sensor-kind--pressure {
   background: rgba(249, 115, 22, 0.25);
   color: #fdba74;
+}
+
+.alert-center__header {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.alert-center__body {
+  gap: 1rem;
+}
+
+.alert-center__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.alert-center__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  background: rgba(148, 163, 184, 0.16);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.alert-center__badge[data-active='true'] {
+  background: rgba(249, 115, 22, 0.22);
+  color: #ffedd5;
+}
+
+.alert-center__refresh {
+  border: 1px solid rgba(71, 85, 105, 0.6);
+  background: rgba(15, 23, 42, 0.45);
+  color: #e2e8f0;
+  border-radius: var(--radius-md);
+  padding: 0.45rem 0.85rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.alert-center__refresh:hover {
+  border-color: rgba(56, 189, 248, 0.5);
+  transform: translateY(-1px);
+}
+
+.alert-center__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.alert-center__resolved {
+  border-top: 1px solid rgba(71, 85, 105, 0.4);
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.alert-center__resolved h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.alert-item {
+  border: 1px solid rgba(71, 85, 105, 0.45);
+  border-radius: var(--radius-md);
+  background: rgba(15, 23, 42, 0.55);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 15px 40px rgba(15, 23, 42, 0.35);
+}
+
+.alert-item__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.alert-item__metric {
+  font-size: 0.9rem;
+  color: var(--muted-strong);
+  font-weight: 500;
+}
+
+.alert-item__time {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.alert-item__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.alert-item__message {
+  font-size: 0.95rem;
+  color: #f8fafc;
+  line-height: 1.4;
+}
+
+.alert-item__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.alert-item__meta dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.alert-item__meta dd {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted-strong);
+}
+
+.alert-item__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.alert-item__button {
+  border: 1px solid rgba(71, 85, 105, 0.6);
+  background: rgba(15, 23, 42, 0.6);
+  color: #e2e8f0;
+  border-radius: var(--radius-md);
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.alert-item__button:hover {
+  border-color: rgba(56, 189, 248, 0.5);
+  transform: translateY(-1px);
+}
+
+.alert-item__button--primary {
+  border-color: rgba(249, 115, 22, 0.6);
+  background: rgba(249, 115, 22, 0.2);
+  color: #ffedd5;
+}
+
+.alert-item__button--primary:hover {
+  border-color: rgba(249, 115, 22, 0.85);
+}
+
+.alert-item__acknowledged,
+.alert-item__resolved {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.alert-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.alert-badge--warning {
+  background: rgba(249, 115, 22, 0.25);
+  color: #fdba74;
+}
+
+.alert-badge--critical {
+  background: rgba(248, 113, 113, 0.3);
+  color: #fecaca;
 }
 
 .sensor-kind--level {

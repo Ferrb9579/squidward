@@ -7,6 +7,7 @@ import { MapPanel } from './components/MapPanel'
 import { SensorDetails } from './components/SensorDetails'
 import { SensorList } from './components/SensorList'
 import { ZoneSnapshotList } from './components/ZoneSnapshotList'
+import { AlertCenter } from './components/AlertCenter'
 import { useEventStream } from './hooks/useEventStream'
 import { useDashboardStore } from './store/dashboardStore'
 
@@ -23,6 +24,11 @@ function App() {
   const isLoading = useDashboardStore((state) => state.isLoading)
   const error = useDashboardStore((state) => state.error)
   const recentEvents = useDashboardStore((state) => state.recentEvents)
+  const alerts = useDashboardStore((state) => state.alerts)
+  const alertsLoading = useDashboardStore((state) => state.alertsLoading)
+  const loadAlerts = useDashboardStore((state) => state.loadAlerts)
+  const acknowledgeAlert = useDashboardStore((state) => state.acknowledgeAlert)
+  const resolveAlert = useDashboardStore((state) => state.resolveAlert)
 
   useEffect(() => {
     void initialize()
@@ -41,6 +47,10 @@ function App() {
 
   const handleSelectSensor = (sensorId: string) => {
     selectSensor(sensorId)
+  }
+
+  const handleRefreshAlerts = () => {
+    void loadAlerts({ status: 'all' })
   }
 
   return (
@@ -72,6 +82,17 @@ function App() {
             sensors={sensors}
             selectedSensorId={selectedSensorId}
             onSelect={handleSelectSensor}
+          />
+          <AlertCenter
+            alerts={alerts}
+            isLoading={alertsLoading}
+            onRefresh={handleRefreshAlerts}
+            onAcknowledge={(alertId) => {
+              void acknowledgeAlert(alertId)
+            }}
+            onResolve={(alertId) => {
+              void resolveAlert(alertId)
+            }}
           />
           <ZoneSnapshotList zones={zones} />
           <LiveFeed events={recentEvents} />

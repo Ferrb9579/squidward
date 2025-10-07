@@ -65,3 +65,37 @@ export interface LiveEvent {
   sensor: SensorState
   reading: Measurement
 }
+
+export type LeakAlertMetric =
+  | 'flowRateLpm'
+  | 'pressureBar'
+  | 'levelPercent'
+  | 'composite'
+
+export type LeakAlertSeverity = 'warning' | 'critical'
+
+export interface LeakAlert {
+  id: string
+  sensorId: string
+  sensorName: string
+  zone: SensorZone
+  metric: LeakAlertMetric
+  message: string
+  severity: LeakAlertSeverity
+  triggeredAt: Date
+  currentValue?: number
+  baselineValue?: number
+  delta?: number
+  acknowledged: boolean
+  acknowledgedAt?: Date
+  resolvedAt?: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type LeakAlertEventType = 'created' | 'updated' | 'resolved'
+
+export interface LeakAlertEvent {
+  type: LeakAlertEventType
+  alert: LeakAlert
+}

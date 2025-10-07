@@ -13,3 +13,5 @@ export const API_BASE_URL = normalizeBaseUrl(
 export const STREAM_URL = `${API_BASE_URL}/stream`
 
 export const MEASUREMENT_LIMIT = 120
+
+export const ALERT_LIMIT = 100

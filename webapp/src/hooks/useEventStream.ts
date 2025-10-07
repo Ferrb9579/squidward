@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { parseCycleEvent, parseReadingEvent } from '../api/dashboard'
+import { parseLeakAlertEvent } from '../api/alerts'
 import { STREAM_URL } from '../config'
 import { useDashboardStore } from '../store/dashboardStore'
 
@@ -7,6 +8,7 @@ export const useEventStream = () => {
   const applyReading = useDashboardStore((state) => state.applyReading)
   const refreshAggregates = useDashboardStore((state) => state.refreshAggregates)
   const setStreamStatus = useDashboardStore((state) => state.setStreamStatus)
+  const applyAlertEvent = useDashboardStore((state) => state.applyAlertEvent)
 
   useEffect(() => {
     setStreamStatus('connecting')
@@ -28,6 +30,13 @@ export const useEventStream = () => {
       void refreshAggregates(timestamp ?? undefined)
     })
 
+    source.addEventListener('leak-alert', (event) => {
+      const payload = parseLeakAlertEvent((event as MessageEvent).data)
+      if (payload) {
+        applyAlertEvent(payload)
+      }
+    })
+
     source.addEventListener('error', (event) => {
       console.error('EventSource encountered an error', event)
       setStreamStatus('error')
@@ -37,5 +46,5 @@ export const useEventStream = () => {
       setStreamStatus('idle')
       source.close()
     }
-  }, [applyReading, refreshAggregates, setStreamStatus])
+  }, [applyAlertEvent, applyReading, refreshAggregates, setStreamStatus])
 }
