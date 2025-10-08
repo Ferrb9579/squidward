@@ -34,6 +34,10 @@ import {
 } from '../services/apiKeyService'
 import { env } from '../config/env'
 import { runAgentCommand } from '../services/geminiAgentService'
+import {
+  getWaterQualitySummaryForSensor,
+  listWaterQualitySummaries
+} from '../services/waterQualityService'
 
 const api = Router()
 
@@ -56,6 +60,9 @@ const automationMetrics: AutomationMetric[] = [
   'pressureBar',
   'levelPercent',
   'temperatureCelsius',
+  'ph',
+  'turbidityNTU',
+  'conductivityUsCm',
   'batteryPercent',
   'healthScore',
   'leakDetected'
@@ -544,6 +551,39 @@ api.get(
   asyncHandler(async (_req, res) => {
     const analytics = await getUsageAnalytics()
     res.json({ analytics })
+  })
+)
+
+api.get(
+  '/water-quality',
+  asyncHandler(async (req, res) => {
+    const sensorId = typeof req.query.sensorId === 'string' ? req.query.sensorId.trim() : undefined
+
+    if (sensorId) {
+      const summary = await getWaterQualitySummaryForSensor(sensorId)
+      if (!summary) {
+        res.status(404).json({ message: 'Sensor not found' })
+        return
+      }
+      res.json({ summary })
+      return
+    }
+
+    const summaries = await listWaterQualitySummaries()
+    res.json({ summaries })
+  })
+)
+
+api.get(
+  '/sensors/:sensorId/water-quality',
+  asyncHandler(async (req, res) => {
+    const summary = await getWaterQualitySummaryForSensor(req.params.sensorId)
+    if (!summary) {
+      res.status(404).json({ message: 'Sensor not found' })
+      return
+    }
+
+    res.json({ summary })
   })
 )
 

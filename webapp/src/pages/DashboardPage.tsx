@@ -32,6 +32,9 @@ export const DashboardPage = () => {
   const acknowledgeAlert = useDashboardStore((state) => state.acknowledgeAlert)
   const resolveAlert = useDashboardStore((state) => state.resolveAlert)
   const loadAnalytics = useDashboardStore((state) => state.loadAnalytics)
+  const waterQuality = useDashboardStore((state) => state.waterQuality)
+  const waterQualityLoading = useDashboardStore((state) => state.waterQualityLoading)
+  const loadWaterQuality = useDashboardStore((state) => state.loadWaterQuality)
 
   useEffect(() => {
     void initialize()
@@ -47,6 +50,26 @@ export const DashboardPage = () => {
   const selectedMeasurements = selectedSensorId
     ? measurements[selectedSensorId] ?? []
     : []
+
+  const selectedWaterQuality = selectedSensorId
+    ? waterQuality[selectedSensorId]
+    : undefined
+
+  const waterQualityStatus = useMemo(() => {
+    const counts = {
+      safe: 0,
+      warning: 0,
+      contaminated: 0,
+      missing: 0
+    }
+
+    sensors.forEach((sensor) => {
+      const status = waterQuality[sensor.id]?.status ?? 'missing'
+      counts[status as keyof typeof counts] += 1
+    })
+
+    return counts
+  }, [sensors, waterQuality])
 
   const handleSelectSensor = (sensorId: string) => {
     if (sensorId === selectedSensorId) {
@@ -67,6 +90,10 @@ export const DashboardPage = () => {
     void loadAnalytics()
   }
 
+  const handleRefreshWaterQuality = () => {
+    void loadWaterQuality()
+  }
+
   const [isMapExpanded, setIsMapExpanded] = useState(false)
 
   return (
@@ -75,6 +102,7 @@ export const DashboardPage = () => {
         overview={overview}
         lastCycleAt={lastCycleAt}
         streamStatus={streamStatus}
+        waterQualityStatus={waterQualityStatus}
       />
       {error && (
         <div className="rounded-xl border border-rose-500/40 bg-rose-500/15 px-5 py-4 text-sm text-rose-100">
@@ -96,6 +124,9 @@ export const DashboardPage = () => {
           <SensorDetails
             sensor={selectedSensor}
             measurements={selectedMeasurements}
+            waterQuality={selectedWaterQuality}
+            onRefreshWaterQuality={handleRefreshWaterQuality}
+            waterQualityLoading={waterQualityLoading}
           />
           <UsageAnalyticsPanel
             analytics={analytics}
@@ -108,6 +139,7 @@ export const DashboardPage = () => {
             sensors={sensors}
             selectedSensorId={selectedSensorId}
             onSelect={handleSelectSensor}
+            waterQuality={waterQuality}
           />
           <AlertCenter
             alerts={alerts}

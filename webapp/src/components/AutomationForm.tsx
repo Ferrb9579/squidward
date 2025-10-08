@@ -34,6 +34,9 @@ const metricOptions: Array<{ value: AutomationMetric; label: string; isBoolean: 
   { value: 'pressureBar', label: 'Pressure (bar)', isBoolean: false },
   { value: 'levelPercent', label: 'Level (%)', isBoolean: false },
   { value: 'temperatureCelsius', label: 'Temperature (°C)', isBoolean: false },
+  { value: 'ph', label: 'pH', isBoolean: false },
+  { value: 'turbidityNTU', label: 'Turbidity (NTU)', isBoolean: false },
+  { value: 'conductivityUsCm', label: 'Conductivity (µS/cm)', isBoolean: false },
   { value: 'batteryPercent', label: 'Battery (%)', isBoolean: false },
   { value: 'healthScore', label: 'Health score', isBoolean: false },
   { value: 'leakDetected', label: 'Leak detected state', isBoolean: true }

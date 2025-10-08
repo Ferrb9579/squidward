@@ -351,10 +351,16 @@ class IotSimulator extends EventEmitter {
         const flow = clamp(jitter(80, 15), 20, 180)
         const pressure = clamp(jitter(2.8, 0.3), 1.2, 4.8)
         const level = clamp(jitter(68, 6), 25, 100)
+        const ph = clamp(jitter(7.1, 0.35), 5.8, 8.6)
+        const turbidity = clamp(jitter(1.6, 0.9), 0.1, 8.5)
+        const conductivity = clamp(jitter(420, 55), 160, 880)
         reading.flowRateLpm = flow
         reading.pressureBar = pressure
         reading.levelPercent = level
         reading.temperatureCelsius = clamp(jitter(19, 1.5), 15, 30)
+        reading.ph = ph
+        reading.turbidityNTU = turbidity
+        reading.conductivityUsCm = conductivity
         reading.leakDetected = leakTrigger && (flow > 150 || pressure > 4.2)
         break
       }

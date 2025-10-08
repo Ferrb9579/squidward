@@ -158,6 +158,9 @@ export interface IngestSensorReadingInput {
   pressureBar?: number
   levelPercent?: number
   temperatureCelsius?: number
+  ph?: number
+  turbidityNTU?: number
+  conductivityUsCm?: number
   batteryPercent?: number
   leakDetected?: boolean
   healthScore?: number
@@ -180,6 +183,9 @@ export const ingestSensorReading = async (
     pressureBar: input.pressureBar,
     levelPercent: input.levelPercent,
     temperatureCelsius: input.temperatureCelsius,
+    ph: input.ph,
+    turbidityNTU: input.turbidityNTU,
+    conductivityUsCm: input.conductivityUsCm,
     batteryPercent: input.batteryPercent,
     leakDetected: input.leakDetected,
     healthScore:
@@ -202,6 +208,9 @@ export const ingestSensorReading = async (
     pressureBar: input.pressureBar,
     levelPercent: input.levelPercent,
     temperatureCelsius: input.temperatureCelsius,
+    ph: input.ph,
+    turbidityNTU: input.turbidityNTU,
+    conductivityUsCm: input.conductivityUsCm,
     batteryPercent: input.batteryPercent,
     leakDetected: input.leakDetected,
     healthScore: measurementPayload.healthScore
@@ -219,6 +228,9 @@ export const ingestSensorReading = async (
     pressureBar: measurementPayload.pressureBar ?? undefined,
     levelPercent: measurementPayload.levelPercent ?? undefined,
     temperatureCelsius: measurementPayload.temperatureCelsius ?? undefined,
+    ph: measurementPayload.ph ?? undefined,
+    turbidityNTU: measurementPayload.turbidityNTU ?? undefined,
+    conductivityUsCm: measurementPayload.conductivityUsCm ?? undefined,
     batteryPercent: measurementPayload.batteryPercent ?? undefined,
     leakDetected: measurementPayload.leakDetected ?? undefined,
     healthScore: measurementPayload.healthScore ?? undefined
@@ -266,6 +278,9 @@ export const getRecentMeasurementsForSensor = async (
     pressureBar: doc.pressureBar ?? undefined,
     levelPercent: doc.levelPercent ?? undefined,
     temperatureCelsius: doc.temperatureCelsius ?? undefined,
+  ph: doc.ph ?? undefined,
+  turbidityNTU: doc.turbidityNTU ?? undefined,
+  conductivityUsCm: doc.conductivityUsCm ?? undefined,
     batteryPercent: doc.batteryPercent ?? undefined,
     leakDetected: doc.leakDetected ?? undefined,
     healthScore: doc.healthScore ?? undefined,

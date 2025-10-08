@@ -24,6 +24,9 @@ type MetricKey =
   | 'pressureBar'
   | 'levelPercent'
   | 'temperatureCelsius'
+  | 'ph'
+  | 'turbidityNTU'
+  | 'conductivityUsCm'
   | 'batteryPercent'
   | 'healthScore'
   | 'leakDetected'
@@ -33,6 +36,9 @@ const metricOrder: MetricKey[] = [
   'pressureBar',
   'levelPercent',
   'temperatureCelsius',
+  'ph',
+  'turbidityNTU',
+  'conductivityUsCm',
   'batteryPercent',
   'healthScore',
   'leakDetected'
@@ -43,6 +49,9 @@ const metricLabel: Record<MetricKey, string> = {
   pressureBar: 'Pressure',
   levelPercent: 'Level',
   temperatureCelsius: 'Temperature',
+  ph: 'pH',
+  turbidityNTU: 'Turbidity',
+  conductivityUsCm: 'Conductivity',
   batteryPercent: 'Battery',
   healthScore: 'Health score',
   leakDetected: 'Leak'
@@ -59,6 +68,12 @@ const formatMetricValue = (key: MetricKey, value: number | boolean) => {
       return `${Number(value).toFixed(1)}%`
     case 'temperatureCelsius':
       return `${Number(value).toFixed(1)} °C`
+    case 'ph':
+      return Number(value).toFixed(2)
+    case 'turbidityNTU':
+      return `${Number(value).toFixed(1)} NTU`
+    case 'conductivityUsCm':
+      return `${Math.round(Number(value))} µS/cm`
     case 'batteryPercent':
       return `${Number(value).toFixed(0)}%`
     case 'healthScore':

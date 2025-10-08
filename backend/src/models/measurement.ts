@@ -4,13 +4,16 @@ const measurementSchema = new Schema(
   {
     sensorId: { type: String, required: true, index: true },
     timestamp: { type: Date, required: true, index: true },
-    flowRateLpm: Number,
-    pressureBar: Number,
-    levelPercent: Number,
-    temperatureCelsius: Number,
-    batteryPercent: Number,
-    leakDetected: Boolean,
-    healthScore: Number
+  flowRateLpm: Number,
+  pressureBar: Number,
+  levelPercent: Number,
+  temperatureCelsius: Number,
+  ph: Number,
+  turbidityNTU: Number,
+  conductivityUsCm: Number,
+  batteryPercent: Number,
+  leakDetected: Boolean,
+  healthScore: Number
   },
   {
     timestamps: true,

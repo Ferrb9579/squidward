@@ -1,11 +1,19 @@
-import { Activity, Clock3, GaugeCircle, ShieldCheck } from 'lucide-react'
+import { Activity, Clock3, Droplets, GaugeCircle, ShieldCheck } from 'lucide-react'
 import { badgeBaseClass } from '../styles/ui'
 import type { OverviewMetrics, StreamStatus } from '../types'
+
+interface WaterQualityStatusCounts {
+  safe: number
+  warning: number
+  contaminated: number
+  missing: number
+}
 
 interface OverviewCardsProps {
   overview?: OverviewMetrics
   lastCycleAt?: Date
   streamStatus: StreamStatus
+  waterQualityStatus?: WaterQualityStatusCounts
 }
 
 const statusLabels: Record<StreamStatus, string> = {
@@ -29,7 +37,16 @@ const formatTime = (value?: Date) => {
   return `${value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
 }
 
-export const OverviewCards = ({ overview, lastCycleAt, streamStatus }: OverviewCardsProps) => {
+export const OverviewCards = ({
+  overview,
+  lastCycleAt,
+  streamStatus,
+  waterQualityStatus
+}: OverviewCardsProps) => {
+  const contaminatedCount = waterQualityStatus?.contaminated ?? 0
+  const warningCount = waterQualityStatus?.warning ?? 0
+  const affectedCount = contaminatedCount + warningCount
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -41,7 +58,7 @@ export const OverviewCards = ({ overview, lastCycleAt, streamStatus }: OverviewC
         </div>
         <span className={statusStyles[streamStatus]}>{statusLabels[streamStatus]}</span>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <article className="flex flex-col gap-3 rounded-2xl border border-slate-700/50 bg-slate-900/80 p-5 shadow-panel">
           <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-slate-300">
             <GaugeCircle size={18} aria-hidden />
@@ -71,6 +88,20 @@ export const OverviewCards = ({ overview, lastCycleAt, streamStatus }: OverviewC
             {overview?.averageHealthScore ?? '—'}
           </p>
           <p className="text-sm text-slate-400">Composite of battery, stability, and leak signals.</p>
+        </article>
+        <article className="flex flex-col gap-3 rounded-2xl border border-slate-700/50 bg-slate-900/80 p-5 shadow-panel">
+          <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-slate-300">
+            <Droplets size={18} aria-hidden />
+            Water quality
+          </h3>
+          <p className="text-3xl font-semibold text-slate-100">
+            {waterQualityStatus ? affectedCount : '—'}
+          </p>
+          <p className="text-sm text-slate-400">
+            {waterQualityStatus
+              ? `${contaminatedCount} contaminated • ${warningCount} warning`
+              : 'Awaiting lab chemistry samples.'}
+          </p>
         </article>
         <article className="flex flex-col gap-3 rounded-2xl border border-slate-700/50 bg-slate-900/80 p-5 shadow-panel">
           <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-slate-300">

@@ -5,12 +5,13 @@ import {
   panelClass,
   panelHeaderClass
 } from '../styles/ui'
-import type { SensorState } from '../types'
+import type { SensorState, WaterQualitySummary } from '../types'
 
 interface SensorListProps {
   sensors: SensorState[]
   selectedSensorId?: string
   onSelect: (sensorId: string) => void
+  waterQuality?: Record<string, WaterQualitySummary>
 }
 
 const timeFormatter = new Intl.DateTimeFormat(undefined, {
@@ -25,7 +26,12 @@ const sensorComparator = (a: SensorState, b: SensorState) => {
   return a.zone.name.localeCompare(b.zone.name)
 }
 
-export const SensorList = ({ sensors, selectedSensorId, onSelect }: SensorListProps) => {
+export const SensorList = ({
+  sensors,
+  selectedSensorId,
+  onSelect,
+  waterQuality
+}: SensorListProps) => {
   const [search, setSearch] = useState('')
 
   const groupedSensors = useMemo(() => {
@@ -83,6 +89,16 @@ export const SensorList = ({ sensors, selectedSensorId, onSelect }: SensorListPr
                   const lastSeen = sensor.lastReadingAt
                     ? timeFormatter.format(sensor.lastReadingAt)
                     : '—'
+                  const quality = waterQuality?.[sensor.id]
+                  const qualityBadge = quality
+                    ? quality.status === 'contaminated'
+                      ? 'bg-rose-500/15 text-rose-200 border border-rose-500/40'
+                      : quality.status === 'warning'
+                        ? 'bg-amber-500/15 text-amber-200 border border-amber-500/40'
+                        : quality.status === 'safe'
+                          ? 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/40'
+                          : 'bg-slate-800/70 text-slate-300 border border-slate-700/60'
+                    : undefined
                   const baseItem = 'rounded-xl border border-slate-700/50 bg-slate-900/60 transition hover:border-sky-400/50'
                   const activeItem = sensor.id === selectedSensorId
                     ? ' border-sky-400/70 bg-sky-500/10 shadow-panel'
@@ -116,6 +132,11 @@ export const SensorList = ({ sensors, selectedSensorId, onSelect }: SensorListPr
                           <span>{sensor.zone.name}</span>
                           <span>Updated {lastSeen}</span>
                         </div>
+                        {quality && (
+                          <div className={`w-fit rounded-full px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.25em] ${qualityBadge ?? ''}`}>
+                            {quality.status === 'missing' ? 'no data' : quality.status}
+                          </div>
+                        )}
                       </button>
                     </li>
                   )

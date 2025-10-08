@@ -33,11 +33,35 @@ export interface Measurement {
   pressureBar?: number
   levelPercent?: number
   temperatureCelsius?: number
+  ph?: number
+  turbidityNTU?: number
+  conductivityUsCm?: number
   batteryPercent?: number
   leakDetected?: boolean
   healthScore?: number
   createdAt?: Date
   updatedAt?: Date
+}
+
+export type WaterQualityLevel = 'missing' | 'safe' | 'warning' | 'contaminated'
+
+export interface WaterQualityMetricResult {
+  metric: 'ph' | 'temperatureCelsius' | 'turbidityNTU' | 'conductivityUsCm'
+  label: string
+  unit?: string
+  value?: number
+  status: WaterQualityLevel
+  message: string
+  recommendedRange: string
+}
+
+export interface WaterQualitySummary {
+  sensorId: string
+  sensorName: string
+  zone: SensorZone
+  measuredAt?: Date
+  status: WaterQualityLevel
+  metrics: WaterQualityMetricResult[]
 }
 
 export interface ZoneSnapshot {
@@ -161,6 +185,9 @@ export type AutomationMetric =
   | 'pressureBar'
   | 'levelPercent'
   | 'temperatureCelsius'
+  | 'ph'
+  | 'turbidityNTU'
+  | 'conductivityUsCm'
   | 'batteryPercent'
   | 'healthScore'
   | 'leakDetected'

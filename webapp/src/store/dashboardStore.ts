@@ -11,6 +11,10 @@ import {
   resolveLeakAlert
 } from '../api/alerts'
 import { fetchUsageAnalytics } from '../api/analytics'
+import {
+  fetchWaterQualitySummaries,
+  fetchWaterQualityForSensor
+} from '../api/waterQuality'
 import { ALERT_LIMIT, MEASUREMENT_LIMIT } from '../config'
 import type {
   LeakAlert,
@@ -22,8 +26,10 @@ import type {
   UsageAnalytics,
   SensorState,
   StreamStatus,
+  WaterQualitySummary,
   ZoneSnapshot
 } from '../types'
+import { evaluateWaterQuality } from '../utils/waterQuality'
 
 interface DashboardState {
   sensors: SensorState[]
@@ -40,6 +46,8 @@ interface DashboardState {
   alertsLoading: boolean
   analytics?: UsageAnalytics
   analyticsLoading: boolean
+  waterQuality: Record<string, WaterQualitySummary>
+  waterQualityLoading: boolean
   initialize: () => Promise<void>
   refreshAggregates: (timestamp?: Date) => Promise<void>
   selectSensor: (sensorId?: string) => void
@@ -50,6 +58,8 @@ interface DashboardState {
   acknowledgeAlert: (alertId: string) => Promise<void>
   resolveAlert: (alertId: string) => Promise<void>
   loadAnalytics: () => Promise<void>
+  loadWaterQuality: () => Promise<void>
+  loadWaterQualityForSensor: (sensorId: string) => Promise<void>
   setStreamStatus: (status: StreamStatus) => void
   setError: (message?: string) => void
 }
@@ -71,6 +81,12 @@ const clampAlerts = (alerts: LeakAlert[]) =>
     .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
     .slice(0, ALERT_LIMIT)
 
+const indexWaterQuality = (summaries: WaterQualitySummary[]) =>
+  summaries.reduce<Record<string, WaterQualitySummary>>((acc, summary) => {
+    acc[summary.sensorId] = summary
+    return acc
+  }, {})
+
 export const useDashboardStore = create<DashboardState>()((set, get) => ({
   sensors: [],
   measurements: {},
@@ -85,16 +101,25 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
   alertsLoading: false,
   analytics: undefined,
   analyticsLoading: false,
+  waterQuality: {},
+  waterQualityLoading: false,
   initialize: async () => {
     if (get().isLoading) return
-    set({ isLoading: true, error: undefined, alertsLoading: true, analyticsLoading: true })
+    set({
+      isLoading: true,
+      error: undefined,
+      alertsLoading: true,
+      analyticsLoading: true,
+      waterQualityLoading: true
+    })
     try {
-      const [sensors, overview, zones, alerts, analytics] = await Promise.all([
+      const [sensors, overview, zones, alerts, analytics, waterQuality] = await Promise.all([
         fetchSensors(),
         fetchOverviewMetrics(),
         fetchZoneSnapshots(),
         fetchLeakAlerts({ status: 'all', limit: ALERT_LIMIT }),
-        fetchUsageAnalytics()
+        fetchUsageAnalytics(),
+        fetchWaterQualitySummaries()
       ])
 
       const selectedSensorId =
@@ -109,7 +134,9 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
         analytics,
         isLoading: false,
         alertsLoading: false,
-        analyticsLoading: false
+        analyticsLoading: false,
+        waterQuality: indexWaterQuality(waterQuality),
+        waterQualityLoading: false
       })
 
       if (selectedSensorId) {
@@ -124,17 +151,19 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
             : 'Unexpected error loading dashboard',
         isLoading: false,
         alertsLoading: false,
-        analyticsLoading: false
+        analyticsLoading: false,
+        waterQualityLoading: false
       })
     }
   },
   refreshAggregates: async (timestamp?: Date) => {
-    set({ analyticsLoading: true })
+    set({ analyticsLoading: true, waterQualityLoading: true })
     try {
-      const [overview, zones, analytics] = await Promise.all([
+      const [overview, zones, analytics, waterQuality] = await Promise.all([
         fetchOverviewMetrics(),
         fetchZoneSnapshots(),
-        fetchUsageAnalytics()
+        fetchUsageAnalytics(),
+        fetchWaterQualitySummaries()
       ])
       set({
         overview,
@@ -142,6 +171,8 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
         analytics,
         lastCycleAt: timestamp ?? new Date(),
         analyticsLoading: false,
+        waterQuality: indexWaterQuality(waterQuality),
+        waterQualityLoading: false,
         error: undefined
       })
     } catch (error) {
@@ -151,7 +182,8 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
           error instanceof Error
             ? error.message
             : 'Unable to refresh aggregates',
-        analyticsLoading: false
+        analyticsLoading: false,
+        waterQualityLoading: false
       })
     }
   },
@@ -160,6 +192,9 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
     set({ selectedSensorId: sensorId })
     if (sensorId) {
       void get().loadMeasurements(sensorId)
+      if (!get().waterQuality[sensorId]) {
+        void get().loadWaterQualityForSensor(sensorId)
+      }
     }
   },
   loadMeasurements: async (sensorId: string) => {
@@ -207,10 +242,31 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
         ...state.recentEvents
       ])
 
+      const hasWaterQualitySample =
+        reading.ph !== undefined ||
+        reading.turbidityNTU !== undefined ||
+        reading.conductivityUsCm !== undefined ||
+        reading.temperatureCelsius !== undefined
+
+      const waterQuality = hasWaterQualitySample
+        ? {
+            ...state.waterQuality,
+            [sensor.id]: evaluateWaterQuality(sensor, {
+              sensorId: reading.sensorId,
+              timestamp: reading.timestamp,
+              ph: reading.ph,
+              temperatureCelsius: reading.temperatureCelsius,
+              turbidityNTU: reading.turbidityNTU,
+              conductivityUsCm: reading.conductivityUsCm
+            })
+          }
+        : state.waterQuality
+
       return {
         sensors,
         measurements,
-        recentEvents
+        recentEvents,
+        waterQuality
       }
     })
   },
@@ -299,6 +355,43 @@ export const useDashboardStore = create<DashboardState>()((set, get) => ({
             ? error.message
             : 'Unable to load usage analytics'
       })
+    }
+  },
+  loadWaterQuality: async () => {
+    set({ waterQualityLoading: true })
+    try {
+      const summaries = await fetchWaterQualitySummaries()
+      set({
+        waterQuality: indexWaterQuality(summaries),
+        waterQualityLoading: false,
+        error: undefined
+      })
+    } catch (error) {
+      console.error('Failed to load water quality summaries', error)
+      set({
+        waterQualityLoading: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Unable to load water quality summaries'
+      })
+    }
+  },
+  loadWaterQualityForSensor: async (sensorId) => {
+    set({ waterQualityLoading: true })
+    try {
+      const summary = await fetchWaterQualityForSensor(sensorId)
+      set((state) => ({
+        waterQuality: {
+          ...state.waterQuality,
+          [sensorId]: summary
+        },
+        waterQualityLoading: false,
+        error: undefined
+      }))
+    } catch (error) {
+      console.error('Failed to load water quality for sensor', { sensorId, error })
+      set({ waterQualityLoading: false })
     }
   },
   setStreamStatus: (status) => set({ streamStatus: status }),

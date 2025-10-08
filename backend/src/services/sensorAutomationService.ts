@@ -36,6 +36,9 @@ const numericMetrics: AutomationMetric[] = [
   'pressureBar',
   'levelPercent',
   'temperatureCelsius',
+  'ph',
+  'turbidityNTU',
+  'conductivityUsCm',
   'batteryPercent',
   'healthScore'
 ]

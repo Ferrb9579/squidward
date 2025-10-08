@@ -23,6 +23,9 @@ const lastValuesSchema = new Schema(
     pressureBar: Number,
     levelPercent: Number,
     temperatureCelsius: Number,
+    ph: Number,
+    turbidityNTU: Number,
+    conductivityUsCm: Number,
     batteryPercent: Number,
     leakDetected: Boolean,
     healthScore: Number

@@ -5,6 +5,7 @@ import {
   panelHeaderClass
 } from '../styles/ui'
 import type { LiveEvent } from '../types'
+import { evaluateWaterQuality } from '../utils/waterQuality'
 
 interface LiveFeedProps {
   events: LiveEvent[]
@@ -18,7 +19,44 @@ const timeFormatter = new Intl.DateTimeFormat(undefined, {
 })
 
 const describeReading = (event: LiveEvent) => {
-  const { reading } = event
+  const { reading, sensor } = event
+
+  const hasWaterQualitySample =
+    reading.ph !== undefined ||
+    reading.turbidityNTU !== undefined ||
+    reading.conductivityUsCm !== undefined ||
+    reading.temperatureCelsius !== undefined
+
+  if (hasWaterQualitySample) {
+    const summary = evaluateWaterQuality(sensor, {
+      sensorId: reading.sensorId,
+      timestamp: reading.timestamp,
+      ph: reading.ph,
+      temperatureCelsius: reading.temperatureCelsius,
+      turbidityNTU: reading.turbidityNTU,
+      conductivityUsCm: reading.conductivityUsCm
+    })
+
+    if (summary.status === 'contaminated' || summary.status === 'warning') {
+      const flagged = summary.metrics.find((metric) =>
+        metric.status === 'contaminated' || metric.status === 'warning'
+      )
+      if (flagged && flagged.value !== undefined) {
+        const value =
+          flagged.metric === 'ph'
+            ? flagged.value.toFixed(2)
+            : flagged.metric === 'conductivityUsCm'
+              ? Math.round(flagged.value).toString()
+              : flagged.value.toFixed(1)
+        const unit = flagged.unit ? ` ${flagged.unit}` : ''
+        return `${summary.status === 'contaminated' ? '⚠️' : '⚡'} ${flagged.label}: ${value}${unit}`
+      }
+      return summary.status === 'contaminated'
+        ? '⚠️ Water quality contaminated'
+        : '⚡ Water quality warning'
+    }
+  }
+
   if (reading.leakDetected) {
     return 'Leak signature detected'
   }
@@ -30,6 +68,15 @@ const describeReading = (event: LiveEvent) => {
   }
   if (reading.levelPercent !== undefined) {
     return `${reading.levelPercent.toFixed(1)}% level`
+  }
+  if (reading.ph !== undefined) {
+    return `pH ${reading.ph.toFixed(2)}`
+  }
+  if (reading.turbidityNTU !== undefined) {
+    return `${reading.turbidityNTU.toFixed(1)} NTU`
+  }
+  if (reading.conductivityUsCm !== undefined) {
+    return `${Math.round(reading.conductivityUsCm)} µS/cm`
   }
   return 'Sensor heartbeat'
 }

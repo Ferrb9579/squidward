@@ -4,11 +4,18 @@ import {
   panelClass,
   panelHeaderClass
 } from '../styles/ui'
-import type { Measurement, SensorState } from '../types'
+import type {
+  Measurement,
+  SensorState,
+  WaterQualitySummary
+} from '../types'
 
 interface SensorDetailsProps {
   sensor?: SensorState
   measurements: Measurement[]
+  waterQuality?: WaterQualitySummary
+  waterQualityLoading?: boolean
+  onRefreshWaterQuality?: () => void
 }
 
 const formatDateTime = (value?: Date) => {
@@ -25,8 +32,29 @@ const metricLabels: Record<string, string> = {
   pressureBar: 'Pressure (bar)',
   levelPercent: 'Level (%)',
   temperatureCelsius: 'Temperature (°C)',
+  ph: 'pH',
+  turbidityNTU: 'Turbidity (NTU)',
+  conductivityUsCm: 'Conductivity (µS/cm)',
   batteryPercent: 'Battery (%)',
   healthScore: 'Health score'
+}
+
+const formatStatusLabel = (status: WaterQualitySummary['status']) =>
+  status.charAt(0).toUpperCase() + status.slice(1)
+
+const formatWaterQualityValue = (metric: WaterQualitySummary['metrics'][number]) => {
+  if (metric.value === undefined || !Number.isFinite(metric.value)) {
+    return '—'
+  }
+
+  const value =
+    metric.metric === 'ph'
+      ? metric.value.toFixed(2)
+      : metric.metric === 'conductivityUsCm'
+        ? Math.round(metric.value).toString()
+        : metric.value.toFixed(1)
+
+  return `${value}${metric.unit ? ` ${metric.unit}` : ''}`
 }
 
 const renderMetricValue = (value: number | boolean | undefined) => {
@@ -36,7 +64,13 @@ const renderMetricValue = (value: number | boolean | undefined) => {
   return Number.isInteger(value) ? value : value.toFixed(1)
 }
 
-export const SensorDetails = ({ sensor, measurements }: SensorDetailsProps) => {
+export const SensorDetails = ({
+  sensor,
+  measurements,
+  waterQuality,
+  waterQualityLoading,
+  onRefreshWaterQuality
+}: SensorDetailsProps) => {
   if (!sensor) {
     return (
       <div className={panelClass}>
@@ -57,6 +91,10 @@ export const SensorDetails = ({ sensor, measurements }: SensorDetailsProps) => {
     levelPercent: latest?.levelPercent ?? sensor.lastValues?.levelPercent,
     temperatureCelsius:
       latest?.temperatureCelsius ?? sensor.lastValues?.temperatureCelsius,
+    ph: latest?.ph ?? sensor.lastValues?.ph,
+    turbidityNTU: latest?.turbidityNTU ?? sensor.lastValues?.turbidityNTU,
+    conductivityUsCm:
+      latest?.conductivityUsCm ?? sensor.lastValues?.conductivityUsCm,
     batteryPercent: latest?.batteryPercent ?? sensor.lastValues?.batteryPercent,
     healthScore: latest?.healthScore ?? sensor.lastValues?.healthScore,
     leakDetected: latest?.leakDetected ?? sensor.lastValues?.leakDetected
@@ -107,6 +145,94 @@ export const SensorDetails = ({ sensor, measurements }: SensorDetailsProps) => {
           </dl>
         </section>
         <section className="space-y-4 rounded-xl border border-slate-700/40 bg-slate-900/60 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">
+              Water quality
+            </h3>
+            {onRefreshWaterQuality && (
+              <button
+                type="button"
+                onClick={onRefreshWaterQuality}
+                disabled={waterQualityLoading}
+                className={`text-xs font-semibold uppercase tracking-widest transition ${
+                  waterQualityLoading
+                    ? 'cursor-not-allowed text-slate-500'
+                    : 'text-sky-300 hover:text-sky-200'
+                }`}
+              >
+                {waterQualityLoading ? 'Refreshing…' : 'Refresh'}
+              </button>
+            )}
+          </div>
+          {waterQualityLoading && (
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-600 border-t-sky-300" />
+              Updating water quality…
+            </div>
+          )}
+          {waterQuality ? (
+            <div className="space-y-3">
+              <div
+                className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold ${
+                  waterQuality.status === 'contaminated'
+                    ? 'bg-rose-500/15 text-rose-200 border border-rose-500/40'
+                    : waterQuality.status === 'warning'
+                      ? 'bg-amber-500/15 text-amber-200 border border-amber-500/40'
+                      : waterQuality.status === 'safe'
+                        ? 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/40'
+                        : 'bg-slate-800/40 text-slate-200 border border-slate-700/40'
+                }`}
+              >
+                <span>
+                  {waterQuality.status === 'missing'
+                    ? 'No water quality data yet'
+                    : `Status: ${formatStatusLabel(waterQuality.status)}`}
+                </span>
+                {waterQuality.measuredAt && (
+                  <span className="text-xs font-normal text-slate-300">
+                    Updated {formatDateTime(waterQuality.measuredAt)}
+                  </span>
+                )}
+              </div>
+              <dl className="grid gap-3 sm:grid-cols-2">
+                {waterQuality.metrics.map((metric) => (
+                  <div
+                    key={metric.metric}
+                    className="flex flex-col gap-1 rounded-lg border border-slate-800/60 bg-slate-900/50 p-3"
+                  >
+                    <dt className="text-[0.6rem] uppercase tracking-[0.25em] text-slate-400">
+                      {metric.label}
+                    </dt>
+                    <dd className="text-sm font-semibold text-slate-100">
+                      {formatWaterQualityValue(metric)}
+                    </dd>
+                    <dd
+                      className={`text-xs ${
+                        metric.status === 'contaminated'
+                          ? 'text-rose-300'
+                          : metric.status === 'warning'
+                            ? 'text-amber-200'
+                            : metric.status === 'safe'
+                              ? 'text-emerald-200'
+                              : 'text-slate-400'
+                      }`}
+                    >
+                      {metric.message}
+                    </dd>
+                    <dd className="text-[0.6rem] uppercase tracking-[0.2em] text-slate-500">
+                      Range: {metric.recommendedRange}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-slate-800/60 bg-slate-900/40 p-4 text-sm text-slate-300">
+              No water quality samples reported for this sensor yet.
+            </div>
+          )}
+        </section>
+        <section className="space-y-4 rounded-xl border border-slate-700/40 bg-slate-900/60 p-4">
           <h3 className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">
             Recent timeline
           </h3>
@@ -133,6 +259,15 @@ export const SensorDetails = ({ sensor, measurements }: SensorDetailsProps) => {
                     )}
                     {entry.levelPercent !== undefined && (
                       <span>{entry.levelPercent.toFixed(1)}%</span>
+                    )}
+                    {entry.ph !== undefined && (
+                      <span>pH {entry.ph.toFixed(2)}</span>
+                    )}
+                    {entry.turbidityNTU !== undefined && (
+                      <span>{entry.turbidityNTU.toFixed(1)} NTU</span>
+                    )}
+                    {entry.conductivityUsCm !== undefined && (
+                      <span>{Math.round(entry.conductivityUsCm)} µS/cm</span>
                     )}
                     {entry.healthScore !== undefined && (
                       <span>Health {entry.healthScore}</span>

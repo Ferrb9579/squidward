@@ -28,6 +28,9 @@ export interface SensorReading {
   pressureBar?: number
   levelPercent?: number
   temperatureCelsius?: number
+  ph?: number
+  turbidityNTU?: number
+  conductivityUsCm?: number
   batteryPercent?: number
   leakDetected?: boolean
   healthScore?: number

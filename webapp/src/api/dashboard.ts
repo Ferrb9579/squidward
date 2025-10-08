@@ -39,6 +39,9 @@ interface MeasurementDto {
   pressureBar?: number | null
   levelPercent?: number | null
   temperatureCelsius?: number | null
+  ph?: number | null
+  turbidityNTU?: number | null
+  conductivityUsCm?: number | null
   batteryPercent?: number | null
   leakDetected?: boolean | null
   healthScore?: number | null
@@ -124,6 +127,9 @@ const parseMeasurement = (dto: MeasurementDto): Measurement => ({
   pressureBar: dto.pressureBar ?? undefined,
   levelPercent: dto.levelPercent ?? undefined,
   temperatureCelsius: dto.temperatureCelsius ?? undefined,
+  ph: dto.ph ?? undefined,
+  turbidityNTU: dto.turbidityNTU ?? undefined,
+  conductivityUsCm: dto.conductivityUsCm ?? undefined,
   batteryPercent: dto.batteryPercent ?? undefined,
   leakDetected: dto.leakDetected ?? undefined,
   healthScore: dto.healthScore ?? undefined,
