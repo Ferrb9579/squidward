@@ -135,3 +135,13 @@ export interface UsageAnalytics {
   }
   lowReservoirs: ExtremeMeasurement[]
 }
+
+export interface ApiKey {
+  id: string
+  label: string
+  sensorId?: string
+  preview: string
+  createdAt: Date
+  updatedAt: Date
+  lastUsedAt?: Date
+}

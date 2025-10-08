@@ -5,6 +5,7 @@ import {
   SensorSchemaType
 } from '../models/sensor'
 import type { SensorState } from '../types/sensor'
+import type { SensorKind, SensorLocation, SensorZone } from '../types/sensor'
 
 type SensorLean = SensorSchemaType & {
   createdAt?: Date
@@ -55,6 +56,132 @@ export const getAllSensors = async (filter: FilterQuery<SensorSchemaType> = {}) 
 export const getSensorById = async (sensorId: string) => {
   const doc = await SensorModel.findById(sensorId).lean().exec()
   return doc ? mapSensorDocToState(doc) : null
+}
+
+const slugify = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+export interface CreateSensorInput {
+  id?: string
+  name: string
+  kind: SensorKind
+  zone: SensorZone
+  location: SensorLocation
+  installDepthMeters?: number
+  description?: string
+  isActive?: boolean
+}
+
+export const createSensor = async (
+  input: CreateSensorInput
+): Promise<SensorState> => {
+  const id = (input.id ?? slugify(`${input.zone.name}-${input.name}`)).trim()
+  if (!id) {
+    throw new Error('Sensor ID is required')
+  }
+
+  const existing = await SensorModel.findById(id).exec()
+  if (existing) {
+    throw new Error('A sensor with this ID already exists')
+  }
+
+  const doc = await SensorModel.create({
+    _id: id,
+    name: input.name,
+    kind: input.kind,
+    zone: input.zone,
+    location: input.location,
+    installDepthMeters: input.installDepthMeters,
+    description: input.description,
+    isActive: input.isActive ?? true
+  })
+
+  const saved = await SensorModel.findById(doc._id).lean().exec()
+  if (!saved) {
+    throw new Error('Failed to load created sensor')
+  }
+  return mapSensorDocToState(saved)
+}
+
+const compactLastValues = (
+  values: SensorSchemaType['lastValues']
+): SensorSchemaType['lastValues'] | undefined => {
+  if (!values) return undefined
+  const entries = Object.entries(values).reduce<
+    NonNullable<SensorSchemaType['lastValues']>
+  >((acc, [key, value]) => {
+    if (value !== undefined && value !== null) {
+      acc[key as keyof SensorSchemaType['lastValues']] = value as never
+    }
+    return acc
+  }, {} as NonNullable<SensorSchemaType['lastValues']>)
+  return Object.keys(entries).length ? entries : undefined
+}
+
+export interface IngestSensorReadingInput {
+  sensorId: string
+  timestamp?: Date
+  flowRateLpm?: number
+  pressureBar?: number
+  levelPercent?: number
+  temperatureCelsius?: number
+  batteryPercent?: number
+  leakDetected?: boolean
+  healthScore?: number
+}
+
+export const ingestSensorReading = async (
+  input: IngestSensorReadingInput
+): Promise<SensorState> => {
+  const sensorDoc = await SensorModel.findById(input.sensorId).exec()
+  if (!sensorDoc) {
+    throw new Error('Sensor not found')
+  }
+
+  const timestamp = input.timestamp ?? new Date()
+
+  const measurementPayload = {
+    sensorId: input.sensorId,
+    timestamp,
+    flowRateLpm: input.flowRateLpm,
+    pressureBar: input.pressureBar,
+    levelPercent: input.levelPercent,
+    temperatureCelsius: input.temperatureCelsius,
+    batteryPercent: input.batteryPercent,
+    leakDetected: input.leakDetected,
+    healthScore:
+      input.healthScore ?? (typeof input.batteryPercent === 'number'
+        ? Math.max(
+            10,
+            Math.min(
+              100,
+              Math.round(input.batteryPercent - (input.leakDetected ? 35 : 0))
+            )
+          )
+        : undefined)
+  }
+
+  await MeasurementModel.create(measurementPayload)
+
+  sensorDoc.lastReadingAt = timestamp
+  sensorDoc.lastValues = compactLastValues({
+    flowRateLpm: input.flowRateLpm,
+    pressureBar: input.pressureBar,
+    levelPercent: input.levelPercent,
+    temperatureCelsius: input.temperatureCelsius,
+    batteryPercent: input.batteryPercent,
+    leakDetected: input.leakDetected,
+    healthScore: measurementPayload.healthScore
+  })
+  sensorDoc.isActive = true
+
+  await sensorDoc.save()
+
+  return mapSensorDocToState(sensorDoc.toObject())
 }
 
 export interface MeasurementQueryOptions {

@@ -11,7 +11,7 @@ interface SensorsResponse {
   sensors: SensorDto[]
 }
 
-interface SensorDto {
+export interface SensorDto {
   id: string
   name: string
   kind: string
@@ -101,7 +101,7 @@ const sanitizeRecord = <T>(record: Record<string, T | null | undefined> | undefi
   return Object.keys(sanitizedEntries).length ? sanitizedEntries : undefined
 }
 
-const parseSensor = (dto: SensorDto): SensorState => ({
+export const parseSensor = (dto: SensorDto): SensorState => ({
   id: dto.id,
   name: dto.name,
   kind: dto.kind as SensorState['kind'],

@@ -6,7 +6,8 @@ import {
   getSensorById,
   getRecentMeasurementsForSensor,
   getZoneSnapshots,
-  getOverviewMetrics
+  getOverviewMetrics,
+  createSensor
 } from '../services/sensorService'
 import {
   listLeakAlerts,
@@ -14,6 +15,11 @@ import {
   markAlertResolved
 } from '../services/leakAlertService'
 import { getUsageAnalytics } from '../services/analyticsService'
+import {
+  createApiKey,
+  deleteApiKey,
+  listApiKeys
+} from '../services/apiKeyService'
 
 const api = Router()
 
@@ -37,6 +43,55 @@ api.get(
   asyncHandler(async (_req, res) => {
     const sensors = await getAllSensors()
     res.json({ sensors })
+  })
+)
+
+api.post(
+  '/sensors',
+  asyncHandler(async (req, res) => {
+    const { id, name, kind, zone, location, installDepthMeters, description, isActive } = req.body ?? {}
+    if (
+      !name ||
+      !kind ||
+      !zone?.id ||
+      !zone?.name ||
+      typeof location?.latitude !== 'number' ||
+      typeof location?.longitude !== 'number'
+    ) {
+      res.status(400).json({ message: 'Invalid sensor payload' })
+      return
+    }
+
+    try {
+      const sensor = await createSensor({
+        id: typeof id === 'string' && id.trim() ? id : undefined,
+        name,
+        kind,
+        zone: { id: zone.id, name: zone.name },
+        location: {
+          latitude: Number(location.latitude),
+          longitude: Number(location.longitude)
+        },
+        installDepthMeters:
+          installDepthMeters !== undefined ? Number(installDepthMeters) : undefined,
+        description: description ?? undefined,
+        isActive: isActive !== undefined ? Boolean(isActive) : undefined
+      })
+
+      res.status(201).json({ sensor })
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('already exists')) {
+          res.status(409).json({ message: error.message })
+          return
+        }
+        if (error.message.includes('required')) {
+          res.status(400).json({ message: error.message })
+          return
+        }
+      }
+      throw error
+    }
   })
 )
 
@@ -106,6 +161,41 @@ api.get(
   asyncHandler(async (_req, res) => {
     const analytics = await getUsageAnalytics()
     res.json({ analytics })
+  })
+)
+
+api.get(
+  '/api-keys',
+  asyncHandler(async (_req, res) => {
+    const apiKeys = await listApiKeys()
+    res.json({ apiKeys })
+  })
+)
+
+api.post(
+  '/api-keys',
+  asyncHandler(async (req, res) => {
+    const { label, sensorId, createdBy } = req.body ?? {}
+    if (!label || typeof label !== 'string') {
+      res.status(400).json({ message: 'API key label is required' })
+      return
+    }
+
+    const { key, apiKey } = await createApiKey({
+      label: label.trim(),
+      sensorId: typeof sensorId === 'string' && sensorId.trim() ? sensorId : undefined,
+      createdBy: typeof createdBy === 'string' ? createdBy : undefined
+    })
+
+    res.status(201).json({ apiKey, key })
+  })
+)
+
+api.delete(
+  '/api-keys/:apiKeyId',
+  asyncHandler(async (req, res) => {
+    await deleteApiKey(req.params.apiKeyId)
+    res.status(204).send()
   })
 )
 
