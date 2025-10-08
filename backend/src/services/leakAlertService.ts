@@ -1,7 +1,11 @@
 import type { FilterQuery } from 'mongoose'
 import { LeakAlertModel, LeakAlertSchemaType } from '../models/leakAlert'
-import { normalizeAlertPayload } from './leakDetectionService'
-import type { LeakAlertSeverity, LeakAlertSummary } from '../types/alert'
+import { leakDetectionEvents, normalizeAlertPayload } from './leakDetectionService'
+import type {
+  LeakAlertMetric,
+  LeakAlertSeverity,
+  LeakAlertSummary
+} from '../types/alert'
 
 export interface ListLeakAlertOptions {
   status?: 'active' | 'resolved' | 'all'
@@ -104,6 +108,41 @@ export const markAlertResolved = async (
   if (shouldSave) {
     await alert.save()
   }
+
+  return normalizeAlertPayload(alert)
+}
+
+export interface CreateManualLeakAlertInput {
+  sensorId: string
+  sensorName: string
+  zone: { id: string; name: string }
+  metric: LeakAlertMetric
+  severity: LeakAlertSeverity
+  message: string
+  triggeredAt?: Date
+  currentValue?: number
+  baselineValue?: number
+  delta?: number
+}
+
+export const createManualLeakAlert = async (
+  input: CreateManualLeakAlertInput
+): Promise<LeakAlertSummary> => {
+  const alert = await LeakAlertModel.create({
+    sensorId: input.sensorId,
+    sensorName: input.sensorName,
+    zone: input.zone,
+    metric: input.metric,
+    message: input.message,
+    severity: input.severity,
+    triggeredAt: input.triggeredAt ?? new Date(),
+    currentValue: input.currentValue,
+    baselineValue: input.baselineValue,
+    delta: input.delta,
+    acknowledged: false
+  })
+
+  leakDetectionEvents.emit('alert', { type: 'created', alert })
 
   return normalizeAlertPayload(alert)
 }

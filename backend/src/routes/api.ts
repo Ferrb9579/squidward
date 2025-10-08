@@ -22,6 +22,7 @@ import type {
   UpdateAutomationInput
 } from '../services/sensorAutomationService'
 import {
+  createManualLeakAlert,
   listLeakAlerts,
   markAlertAcknowledged,
   markAlertResolved
@@ -34,6 +35,7 @@ import {
 } from '../services/apiKeyService'
 import { env } from '../config/env'
 import { runAgentCommand } from '../services/geminiAgentService'
+import type { LeakAlertMetric, LeakAlertSeverity } from '../types/alert'
 
 const api = Router()
 
@@ -42,6 +44,7 @@ const agentRoutes = [
   { path: '/sensors/new', description: 'Create a new IoT sensor with map placement' },
   { path: '/automations', description: 'Manage automation rules for each sensor' },
   { path: '/automations?create=true', description: 'Open the automation form to create a new rule' },
+  { path: '/alerts/simulate', description: 'Trigger a manual leak alert for testing notifications' },
   { path: '/api-keys', description: 'Manage ingestion API keys' }
 ] as const
 
@@ -69,6 +72,63 @@ const automationMetrics: AutomationMetric[] = [
 const automationComparisons: AutomationComparison[] = ['lt', 'lte', 'gt', 'gte', 'eq', 'neq']
 const automationMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const
 type AutomationHttpMethod = (typeof automationMethods)[number]
+
+const leakAlertMetrics: LeakAlertMetric[] = [
+  'flowRateLpm',
+  'pressureBar',
+  'levelPercent',
+  'composite',
+  'offline'
+]
+
+const leakAlertSeverities: LeakAlertSeverity[] = ['warning', 'critical']
+
+const coerceOptionalNumber = (value: unknown): { ok: boolean; value?: number } => {
+  if (value === undefined || value === null || value === '') {
+    return { ok: true }
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? { ok: true, value } : { ok: false }
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? { ok: true, value: parsed } : { ok: false }
+  }
+
+  return { ok: false }
+}
+
+const coerceOptionalDate = (value: unknown): { ok: boolean; value?: Date } => {
+  if (value === undefined || value === null || value === '') {
+    return { ok: true }
+  }
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.valueOf()) ? { ok: false } : { ok: true, value }
+  }
+
+  const parsed = new Date(String(value))
+  return Number.isNaN(parsed.valueOf()) ? { ok: false } : { ok: true, value: parsed }
+}
+
+const buildManualAlertMessage = (metric: LeakAlertMetric, sensorName: string) => {
+  switch (metric) {
+    case 'flowRateLpm':
+      return `Manual flow anomaly triggered for ${sensorName}`
+    case 'pressureBar':
+      return `Manual pressure spike triggered for ${sensorName}`
+    case 'levelPercent':
+      return `Manual reservoir level drop triggered for ${sensorName}`
+    case 'composite':
+      return `Manual composite leak alert triggered for ${sensorName}`
+    case 'offline':
+      return `${sensorName} flagged as offline manually`
+    default:
+      return `Manual leak alert triggered for ${sensorName}`
+  }
+}
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -627,6 +687,92 @@ api.get(
     })
 
     res.json({ alerts })
+  })
+)
+
+api.post(
+  '/alerts/simulate',
+  asyncHandler(async (req, res) => {
+    const {
+      sensorId,
+      metric,
+      severity,
+      message,
+      triggeredAt,
+      currentValue,
+      baselineValue,
+      delta
+    } = req.body ?? {}
+
+    if (typeof sensorId !== 'string' || !sensorId.trim()) {
+      res.status(400).json({ message: 'sensorId is required' })
+      return
+    }
+
+    const sensor = await getSensorById(sensorId.trim())
+    if (!sensor) {
+      res.status(404).json({ message: 'Sensor not found' })
+      return
+    }
+
+    const metricValue = String(metric ?? '').trim() as LeakAlertMetric
+    if (!leakAlertMetrics.includes(metricValue)) {
+      res.status(400).json({ message: 'Unsupported alert metric' })
+      return
+    }
+
+    const severityValue = String(severity ?? '').trim() as LeakAlertSeverity
+    if (!leakAlertSeverities.includes(severityValue)) {
+      res.status(400).json({ message: 'Alert severity must be warning or critical' })
+      return
+    }
+
+    const triggeredAtResult = coerceOptionalDate(triggeredAt)
+    if (!triggeredAtResult.ok) {
+      res.status(400).json({ message: 'triggeredAt must be a valid date or ISO string' })
+      return
+    }
+
+    const currentValueResult = coerceOptionalNumber(currentValue)
+    if (!currentValueResult.ok) {
+      res.status(400).json({ message: 'currentValue must be a number if provided' })
+      return
+    }
+
+    const baselineValueResult = coerceOptionalNumber(baselineValue)
+    if (!baselineValueResult.ok) {
+      res.status(400).json({ message: 'baselineValue must be a number if provided' })
+      return
+    }
+
+    const deltaResult = coerceOptionalNumber(delta)
+    if (!deltaResult.ok) {
+      res.status(400).json({ message: 'delta must be a number if provided' })
+      return
+    }
+
+    const manualMessage =
+      typeof message === 'string' && message.trim()
+        ? message.trim()
+        : buildManualAlertMessage(metricValue, sensor.name)
+
+    const alert = await createManualLeakAlert({
+      sensorId: sensor.id,
+      sensorName: sensor.name,
+      zone: sensor.zone,
+      metric: metricValue,
+      severity: severityValue,
+      message: manualMessage,
+      triggeredAt: triggeredAtResult.value ?? new Date(),
+      currentValue: currentValueResult.value,
+      baselineValue: baselineValueResult.value,
+      delta: deltaResult.value
+    })
+
+    res.status(201).json({
+      alert,
+      emailDispatchScheduled: env.email.enabled
+    })
   })
 )
 

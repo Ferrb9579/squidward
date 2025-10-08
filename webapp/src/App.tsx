@@ -3,6 +3,7 @@ import DashboardPage from './pages/DashboardPage'
 import CreateSensorPage from './pages/CreateSensorPage'
 import ApiKeysPage from './pages/ApiKeysPage'
 import AutomationsPage from './pages/AutomationsPage'
+import AlertSimulatorPage from './pages/AlertSimulatorPage'
 import AgentAssistant from './components/AgentAssistant'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -20,7 +21,7 @@ function App() {
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
           <div>
             <h1 className="text-lg font-semibold text-slate-100">Hydrogrid Console</h1>
-            <p className="text-xs text-slate-400">Manage sensors, ingestion keys, and live telemetry.</p>
+            {/* <p className="text-xs text-slate-400">Manage sensors, ingestion keys, and live telemetry.</p> */}
           </div>
           <nav className="flex items-center gap-2 text-sm">
             <NavLink to="/" className={navLinkClass} end>
@@ -31,6 +32,9 @@ function App() {
             </NavLink>
             <NavLink to="/automations" className={navLinkClass}>
               Automations
+            </NavLink>
+            <NavLink to="/alerts/simulate" className={navLinkClass}>
+              Alert tester
             </NavLink>
             <NavLink to="/api-keys" className={navLinkClass}>
               API keys
@@ -43,6 +47,7 @@ function App() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/sensors/new" element={<CreateSensorPage />} />
           <Route path="/automations" element={<AutomationsPage />} />
+          <Route path="/alerts/simulate" element={<AlertSimulatorPage />} />
           <Route path="/api-keys" element={<ApiKeysPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

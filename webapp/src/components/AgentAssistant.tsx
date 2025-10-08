@@ -23,7 +23,7 @@ const AgentAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([
     createMessage(
       'assistant',
-      'Hi! I can help you navigate the console—ask me to open the automations page, start a new automation, or pull up a specific sensor.'
+      'Hi! I can help you navigate the console—ask me to open the automations page, start a new automation, jump into the alert tester, or pull up a specific sensor.'
     )
   ])
   const [input, setInput] = useState('')

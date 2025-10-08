@@ -331,7 +331,7 @@ export const UsageAnalyticsPanel = ({
                 </div>
               </div>
             </section>
-            <section className={panelSectionClass}>
+            {/* <section className={panelSectionClass}>
               <header className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-100">Reservoir watch</h3>
               </header>
@@ -362,7 +362,7 @@ export const UsageAnalyticsPanel = ({
                   ))}
                 </ul>
               )}
-            </section>
+            </section> */}
           </div>
         ) : null}
       </div>

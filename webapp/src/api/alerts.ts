@@ -49,6 +49,11 @@ interface LeakAlertEventDto {
   alert: LeakAlertDto
 }
 
+interface SimulateAlertResponse {
+  alert: LeakAlertDto
+  emailDispatchScheduled: boolean
+}
+
 const buildUrl = (path: string, params?: Record<string, string | number | boolean | undefined>) => {
   const url = new URL(`${API_BASE_URL}${path}`)
   if (params) {
@@ -93,6 +98,22 @@ const parseLeakAlert = (dto: LeakAlertDto): LeakAlert => ({
   updatedAt: new Date(dto.updatedAt)
 })
 
+export interface SimulateLeakAlertInput {
+  sensorId: string
+  metric: LeakAlertMetric
+  severity: LeakAlertSeverity
+  message?: string
+  triggeredAt?: Date
+  currentValue?: number
+  baselineValue?: number
+  delta?: number
+}
+
+export interface SimulateLeakAlertResult {
+  alert: LeakAlert
+  emailDispatchScheduled: boolean
+}
+
 export const fetchLeakAlerts = async (
   options: FetchLeakAlertsOptions = {}
 ): Promise<LeakAlert[]> => {
@@ -128,6 +149,33 @@ export const resolveLeakAlert = async (
   })
   const payload = await handleResponse<MutationResponse>(response)
   return parseLeakAlert(payload.alert)
+}
+
+export const simulateLeakAlert = async (
+  input: SimulateLeakAlertInput
+): Promise<SimulateLeakAlertResult> => {
+  const response = await fetch(buildUrl('/alerts/simulate'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      sensorId: input.sensorId,
+      metric: input.metric,
+      severity: input.severity,
+      message: input.message,
+      triggeredAt: input.triggeredAt?.toISOString(),
+      currentValue: input.currentValue,
+      baselineValue: input.baselineValue,
+      delta: input.delta
+    })
+  })
+
+  const payload = await handleResponse<SimulateAlertResponse>(response)
+  return {
+    alert: parseLeakAlert(payload.alert),
+    emailDispatchScheduled: payload.emailDispatchScheduled
+  }
 }
 
 export const parseLeakAlertEvent = (data: string): LeakAlertEvent | null => {
