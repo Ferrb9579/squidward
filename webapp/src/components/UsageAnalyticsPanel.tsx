@@ -233,9 +233,13 @@ export const UsageAnalyticsPanel = ({
                     const width = maxZoneFlow > 0 ? (zone.avgFlowLpm / maxZoneFlow) * 100 : 0
                     return (
                       <li key={zone.zoneId} className="space-y-2">
-                        <div className="flex items-center justify-between text-sm text-slate-300">
-                          <span>{zone.zoneName}</span>
-                          <span>{formatNumber(zone.avgFlowLpm, 1)} L/min</span>
+                        <div className="flex flex-wrap items-baseline justify-between gap-3 text-sm text-slate-300">
+                          <span className="min-w-0 flex-1 truncate" title={zone.zoneName}>
+                            {zone.zoneName}
+                          </span>
+                          <strong className="shrink-0 rounded-md bg-slate-800/70 px-2 py-0.5 text-base text-slate-100">
+                            {formatNumber(zone.avgFlowLpm, 1)} L/min
+                          </strong>
                         </div>
                         <div className="h-2 rounded-full bg-slate-800/80">
                           <span
@@ -265,15 +269,17 @@ export const UsageAnalyticsPanel = ({
                       key={`${event.sensorId}-${event.timestamp.toISOString()}`}
                       className="rounded-lg border border-slate-700/40 bg-slate-900/50 p-3"
                     >
-                      <div className="flex items-center justify-between text-sm text-slate-200">
-                        <strong className="text-base text-slate-100">
+                      <div className="flex flex-wrap items-baseline justify-between gap-3 text-sm text-slate-200">
+                        <strong className="shrink-0 rounded-md bg-slate-800/70 px-2 py-0.5 text-base text-slate-100">
                           {formatNumber(event.value, 0)} L/min
                         </strong>
-                        <span>{event.sensorName}</span>
+                        <span className="min-w-0 flex-1 truncate" title={event.sensorName}>
+                          {event.sensorName}
+                        </span>
                       </div>
-                      <div className="mt-2 flex flex-wrap items-center justify-between text-xs text-slate-400">
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
                         <span>{event.zone.name}</span>
-                        <span title={event.timestamp.toLocaleString()}>
+                        <span title={event.timestamp.toLocaleString()} className="shrink-0">
                           {formatRelative(event.timestamp)}
                         </span>
                       </div>
