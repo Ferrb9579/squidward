@@ -7,6 +7,11 @@ import { simulator, startSimulator, stopSimulator } from './iot/simulator'
 import apiRouter from './routes/api'
 import { verifyApiKey } from './services/apiKeyService'
 import { ingestSensorReading } from './services/sensorService'
+import { startAlertNotifications } from './services/alertNotificationService'
+import {
+	startDeviceMonitoring,
+	stopDeviceMonitoring
+} from './services/deviceMonitoringService'
 
 const app = express()
 app.use(cors())
@@ -116,6 +121,8 @@ const startServer = async () => {
 	try {
 		await connectToDatabase()
 		await startSimulator()
+		startAlertNotifications()
+		startDeviceMonitoring()
 		app.listen(env.port, () => {
 			console.log(`Backend ready on port ${env.port}`)
 		})
@@ -133,6 +140,7 @@ const shutdown = async (signal: NodeJS.Signals) => {
 	console.log(`Received ${signal}. Shutting down gracefully...`)
 	try {
 		await stopSimulator()
+		stopDeviceMonitoring()
 		await disconnectFromDatabase()
 	} finally {
 		process.exit(0)

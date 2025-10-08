@@ -16,7 +16,7 @@ const leakAlertSchema = new Schema(
     metric: {
       type: String,
       required: true,
-      enum: ['flowRateLpm', 'pressureBar', 'levelPercent', 'composite']
+      enum: ['flowRateLpm', 'pressureBar', 'levelPercent', 'composite', 'offline']
     },
     message: { type: String, required: true },
     severity: { type: String, required: true, enum: ['warning', 'critical'] },

@@ -1,11 +1,13 @@
 import { FilterQuery } from 'mongoose'
 import { MeasurementModel, MeasurementDocument } from '../models/measurement'
+import { LeakAlertModel } from '../models/leakAlert'
 import {
   SensorModel,
   SensorSchemaType
 } from '../models/sensor'
 import type { SensorState } from '../types/sensor'
 import type { SensorKind, SensorLocation, SensorZone } from '../types/sensor'
+import { leakDetectionEvents } from './leakDetectionService'
 
 type SensorLean = SensorSchemaType & {
   createdAt?: Date
@@ -122,6 +124,31 @@ const compactLastValues = (
   return Object.keys(entries).length ? entries : undefined
 }
 
+const resolveOfflineAlertsForSensor = async (
+  sensorId: string,
+  sensorName: string,
+  timestamp: Date
+) => {
+  const pendingAlerts = await LeakAlertModel.find({
+    sensorId,
+    metric: 'offline',
+    resolvedAt: { $exists: false }
+  }).exec()
+
+  if (!pendingAlerts.length) {
+    return
+  }
+
+  await Promise.all(
+    pendingAlerts.map(async (alert) => {
+      alert.resolvedAt = timestamp
+      alert.message = `${sensorName} resumed reporting at ${timestamp.toLocaleString()}`
+      await alert.save()
+      leakDetectionEvents.emit('alert', { type: 'resolved', alert })
+    })
+  )
+}
+
 export interface IngestSensorReadingInput {
   sensorId: string
   timestamp?: Date
@@ -180,6 +207,7 @@ export const ingestSensorReading = async (
   sensorDoc.isActive = true
 
   await sensorDoc.save()
+  await resolveOfflineAlertsForSensor(sensorDoc.id, sensorDoc.name, timestamp)
 
   return mapSensorDocToState(sensorDoc.toObject())
 }

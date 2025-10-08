@@ -5,6 +5,7 @@ export type LeakAlertMetric =
   | 'pressureBar'
   | 'levelPercent'
   | 'composite'
+  | 'offline'
 
 export interface LeakAlertSummary {
   id: string

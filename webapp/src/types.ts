@@ -71,6 +71,7 @@ export type LeakAlertMetric =
   | 'pressureBar'
   | 'levelPercent'
   | 'composite'
+  | 'offline'
 
 export type LeakAlertSeverity = 'warning' | 'critical'
 
@@ -144,4 +145,13 @@ export interface ApiKey {
   createdAt: Date
   updatedAt: Date
   lastUsedAt?: Date
+}
+
+export type AgentAction =
+  | { type: 'navigate'; path: string }
+  | { type: 'selectSensor'; sensorId: string }
+
+export interface AgentResponse {
+  reply: string
+  actions: AgentAction[]
 }

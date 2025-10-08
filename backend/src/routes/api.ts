@@ -20,8 +20,16 @@ import {
   deleteApiKey,
   listApiKeys
 } from '../services/apiKeyService'
+import { env } from '../config/env'
+import { runAgentCommand } from '../services/geminiAgentService'
 
 const api = Router()
+
+const agentRoutes = [
+  { path: '/', description: 'Operations dashboard overview with analytics and alerts' },
+  { path: '/sensors/new', description: 'Create a new IoT sensor with map placement' },
+  { path: '/api-keys', description: 'Manage ingestion API keys' }
+] as const
 
 type AsyncHandler = (req: Request, res: Response) => Promise<void>
 
@@ -265,6 +273,43 @@ api.post(
     }
 
     res.json({ alert })
+  })
+)
+
+api.post(
+  '/agent',
+  asyncHandler(async (req, res) => {
+    if (!env.ai.enabled) {
+      res.status(503).json({ message: 'AI assistant is not configured' })
+      return
+    }
+
+    const { message, currentRoute } = req.body ?? {}
+
+    if (typeof message !== 'string' || !message.trim()) {
+      res.status(400).json({ message: 'Agent message is required' })
+      return
+    }
+
+    const sensors = await getAllSensors()
+
+    const context = {
+      currentRoute:
+        typeof currentRoute === 'string' && currentRoute.trim()
+          ? currentRoute
+          : '/',
+      routes: agentRoutes.map((route) => ({ ...route })),
+      sensors: sensors.slice(0, 60).map((sensor) => ({
+        id: sensor.id,
+        name: sensor.name,
+        zone: sensor.zone.name,
+        kind: sensor.kind,
+        isActive: sensor.isActive
+      }))
+    }
+
+    const result = await runAgentCommand(message.trim(), context)
+    res.json({ reply: result.reply, actions: result.actions })
   })
 )
 

@@ -29,7 +29,7 @@ interface BaselineSample {
   previous?: number
 }
 
-type AlertEventPayload = {
+export type AlertEventPayload = {
   type: 'created' | 'updated' | 'resolved'
   alert: LeakAlertDocument
 }
@@ -45,7 +45,8 @@ const metricConfig: Record<LeakAlertMetric, { window: number }> = {
   flowRateLpm: { window: 10 },
   pressureBar: { window: 10 },
   levelPercent: { window: 12 },
-  composite: { window: 8 }
+  composite: { window: 8 },
+  offline: { window: 1 }
 }
 
 const getMetricValue = (
@@ -59,6 +60,8 @@ const getMetricValue = (
       return reading.pressureBar
     case 'levelPercent':
       return reading.levelPercent
+    case 'offline':
+      return undefined
     default:
       return undefined
   }
@@ -336,6 +339,15 @@ const resolveRecoveredAlerts = async (
   await Promise.all(
     activeAlerts.map(async (alert) => {
       const metric = alert.metric
+
+      if (metric === 'offline') {
+        alert.resolvedAt = now
+        alert.message = `${sensor.name} is back online as of ${now.toLocaleString()}`
+        await alert.save()
+        detectionEmitter.emit('alert', { type: 'resolved', alert })
+        return
+      }
+
       const currentValue = getMetricValue(reading, metric)
 
       if (metric === 'composite') {
@@ -365,7 +377,8 @@ const resolveRecoveredAlerts = async (
         flowRateLpm: (value, base) => value <= base * 1.2,
         pressureBar: (value, base) => value <= base * 1.18,
         levelPercent: (value, base) => value >= base - Math.max(6, base * 0.08),
-        composite: () => true
+        composite: () => true,
+        offline: () => true
       }
 
       const isRecovered = safeThresholds[metric](currentValue, baseline)

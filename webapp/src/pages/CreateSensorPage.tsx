@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import {
   MapContainer,
   Marker,
   TileLayer,
+  useMap,
   useMapEvents
 } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -31,6 +32,38 @@ const LocationSelector = ({ onSelect, position }: LocationSelectorProps) => {
   })
 
   return position ? <Marker position={position} icon={selectionIcon} /> : null
+}
+
+const RecenterMap = ({ position }: { position?: { lat: number; lng: number } }) => {
+  const map = useMap()
+  const previousPosition = useRef<{ lat: number; lng: number } | undefined>(undefined)
+
+  useEffect(() => {
+    if (!position) return
+    if (
+      previousPosition.current &&
+      position.lat === previousPosition.current.lat &&
+      position.lng === previousPosition.current.lng
+    ) {
+      return
+    }
+    previousPosition.current = position
+    map.flyTo([position.lat, position.lng], map.getZoom(), { duration: 0.5 })
+  }, [map, position])
+
+  return null
+}
+
+const existingSensorIcon = L.divIcon({
+  className: 'existing-sensor-marker',
+  html: `<div style="width:14px;height:14px;border-radius:50%;background:#38bdf8;border:2px solid rgba(15,23,42,0.85);"></div>`
+})
+
+interface SearchResult {
+  place_id: string
+  display_name: string
+  lat: string
+  lon: string
 }
 
 const kinds: Array<{ value: SensorState['kind']; label: string }> = [
@@ -73,11 +106,17 @@ const CreateSensorPage = () => {
 
   const [form, setForm] = useState<FormState>(defaultForm)
   const [location, setLocation] = useState<{ lat: number; lng: number } | undefined>(undefined)
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(initialCenter)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | undefined>(undefined)
   const [successSensor, setSuccessSensor] = useState<SensorState | undefined>(
     undefined
   )
+  const [isLocating, setIsLocating] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | undefined>(undefined)
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -97,6 +136,85 @@ const CreateSensorPage = () => {
       void refresh()
     }
   }, [refresh, sensors.length])
+
+  useEffect(() => {
+    if (!location) {
+      setMapCenter(initialCenter)
+    }
+  }, [initialCenter, location])
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported in this browser.')
+      return
+    }
+    setIsLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        }
+        setLocation(coords)
+        setMapCenter(coords)
+        setError(undefined)
+        setIsLocating(false)
+      },
+      (geoError) => {
+        console.error('Geolocation failed', geoError)
+        setIsLocating(false)
+        setError('Unable to access current location.')
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    )
+  }
+
+  const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!searchQuery.trim()) {
+      setSearchResults([])
+      setSearchError('Enter a location to search for.')
+      return
+    }
+
+    setIsSearching(true)
+    setSearchError(undefined)
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery.trim())}&limit=5`
+      )
+      if (!response.ok) {
+        throw new Error(`Search failed (${response.status})`)
+      }
+      const results = (await response.json()) as SearchResult[]
+      setSearchResults(results)
+      if (results.length === 0) {
+        setSearchError('No matches found for that query.')
+      }
+    } catch (searchException) {
+      console.error('Location search failed', searchException)
+      setSearchError(
+        searchException instanceof Error
+          ? searchException.message
+          : 'Unable to search for location.'
+      )
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  const handleSelectResult = (result: SearchResult) => {
+    const coords = {
+      lat: Number.parseFloat(result.lat),
+      lng: Number.parseFloat(result.lon)
+    }
+    setLocation(coords)
+    setMapCenter(coords)
+    setSearchResults([])
+    setError(undefined)
+    setSearchError(undefined)
+    setSearchQuery(result.display_name)
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -151,16 +269,84 @@ const CreateSensorPage = () => {
       <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
         <div className={`${panelClass} overflow-hidden`}>
           <div className={`${panelHeaderClass} border-b border-slate-800/50 pb-4`}>Location</div>
+          <div className="flex flex-col gap-3 border-b border-slate-800/40 bg-slate-900/30 p-6 text-sm">
+            <form className="flex flex-col gap-2 sm:flex-row" onSubmit={handleSearch}>
+              <label className="sr-only" htmlFor="search-location">
+                Search for a location
+              </label>
+              <input
+                id="search-location"
+                value={searchQuery}
+                onChange={(event) => {
+                  setSearchQuery(event.target.value)
+                  if (searchError) setSearchError(undefined)
+                }}
+                placeholder="Search for a place or address"
+                className="flex-1 rounded-md border border-slate-700/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 focus:border-sky-400/70 focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={isSearching}
+                className={`${buttonBaseClass} flex-shrink-0 px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                {isSearching ? 'Searching…' : 'Search'}
+              </button>
+            </form>
+            <button
+              type="button"
+              onClick={handleUseCurrentLocation}
+              disabled={isLocating}
+              className={`${buttonBaseClass} w-full px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto`}
+            >
+              {isLocating ? 'Locating…' : 'Use current location'}
+            </button>
+            {searchError ? (
+              <p className="text-sm text-red-400">{searchError}</p>
+            ) : null}
+            {searchResults.length > 0 ? (
+              <div className="rounded-md border border-slate-800/60 bg-slate-900/70">
+                <ul className="divide-y divide-slate-800/60">
+                  {searchResults.map((result) => (
+                    <li key={result.place_id} className="p-3">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectResult(result)}
+                        className="text-left text-sm text-slate-100 hover:text-sky-400"
+                      >
+                        {result.display_name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
           <MapContainer
             key={sensors.length ? 'sensor-centred' : 'fallback-centre'}
-            center={[initialCenter.lat, initialCenter.lng]}
+            center={[mapCenter.lat, mapCenter.lng]}
             zoom={17}
             className="h-[420px] w-full"
             scrollWheelZoom
             style={{ background: '#0f172a' }}
           >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            <LocationSelector onSelect={(lat, lng) => setLocation({ lat, lng })} position={location} />
+            <RecenterMap position={mapCenter} />
+            {sensors.map((sensor) => (
+              <Marker
+                key={sensor.id}
+                position={[sensor.location.latitude, sensor.location.longitude]}
+                icon={existingSensorIcon}
+              />
+            ))}
+            <LocationSelector
+              onSelect={(lat, lng) => {
+                const coords = { lat, lng }
+                setLocation(coords)
+                setMapCenter(coords)
+                setError(undefined)
+              }}
+              position={location}
+            />
           </MapContainer>
           <div className="border-t border-slate-800/40 bg-slate-900/40 px-6 py-4 text-sm text-slate-300">
             {location ? (

@@ -74,7 +74,8 @@ const metricLabel: Record<LeakAlert['metric'], string> = {
   flowRateLpm: 'Flow anomaly',
   pressureBar: 'Pressure spike',
   levelPercent: 'Level drop',
-  composite: 'Composite signal'
+  composite: 'Composite signal',
+  offline: 'Sensor offline'
 }
 
 const metricUnits: Partial<Record<LeakAlert['metric'], string>> = {
@@ -223,10 +224,10 @@ export const AlertCenter = ({
         <div className="space-y-2">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-100">
             <BellRing size={18} aria-hidden />
-            Leak alerts
+            Alert center
           </h2>
           <p className="text-sm text-slate-400">
-            Monitoring anomalies reported by the detection service.
+            Monitoring leak anomalies and device health notifications.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -251,7 +252,7 @@ export const AlertCenter = ({
         {isLoading ? (
           <div className={emptyStateClass}>Loading leak alerts…</div>
         ) : showEmptyState ? (
-          <div className={emptyStateClass}>No active leak alerts. All clear for now.</div>
+          <div className={emptyStateClass}>No active alerts. All clear for now.</div>
         ) : (
           <AlertList
             items={activeAlerts.length > 0 ? activeAlerts : recentResolved}
