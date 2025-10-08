@@ -338,15 +338,17 @@ export const UsageAnalyticsPanel = ({
                       key={`${entry.sensorId}-${entry.timestamp.toISOString()}`}
                       className="rounded-lg border border-slate-700/40 bg-slate-900/50 p-3"
                     >
-                      <div className="flex items-center justify-between text-sm text-slate-200">
-                        <span>{entry.sensorName}</span>
-                        <strong className="text-base text-slate-100">
+                      <div className="flex flex-wrap items-baseline justify-between gap-3 text-sm text-slate-200">
+                        <span className="min-w-0 flex-1 truncate font-medium" title={entry.sensorName}>
+                          {entry.sensorName}
+                        </span>
+                        <strong className="shrink-0 rounded-md bg-slate-800/70 px-2 py-0.5 text-base text-slate-100">
                           {formatNumber(entry.value, 1)}%
                         </strong>
                       </div>
-                      <div className="mt-2 flex flex-wrap items-center justify-between text-xs text-slate-400">
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
                         <span>{entry.zone.name}</span>
-                        <span title={entry.timestamp.toLocaleString()}>
+                        <span title={entry.timestamp.toLocaleString()} className="shrink-0">
                           {formatRelative(entry.timestamp)}
                         </span>
                       </div>

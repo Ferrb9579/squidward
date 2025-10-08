@@ -105,6 +105,44 @@ const seedSensors: SensorMetadata[] = [
     location: { latitude: 37.422415, longitude: -122.085931 },
     description: 'Composite monitoring for central greenspace',
     isActive: true
+  },
+  {
+    id: 'karunya-cse-block-flow',
+    name: 'Karunya CSE Block Flow',
+    kind: 'flow',
+    zone: { id: 'karunya-cse', name: 'Karunya CSE Block' },
+    location: { latitude: 10.933558, longitude: 76.743181 },
+    installDepthMeters: 1.2,
+    description: 'Primary distribution feed for the CSE academic block',
+    isActive: true
+  },
+  {
+    id: 'karunya-emmanuel-aud-pressure',
+    name: 'Karunya Emmanuel Auditorium Pressure',
+    kind: 'pressure',
+    zone: { id: 'karunya-emmanuel', name: 'Karunya Emmanuel Auditorium' },
+    location: { latitude: 10.934023, longitude: 76.745069 },
+    installDepthMeters: 1,
+    description: 'Pressure monitoring for auditorium supply lines',
+    isActive: true
+  },
+  {
+    id: 'karunya-ece-block-level',
+    name: 'Karunya ECE Block Level',
+    kind: 'level',
+    zone: { id: 'karunya-ece', name: 'Karunya ECE Block' },
+    location: { latitude: 10.936495, longitude: 76.743055 },
+    description: 'Reservoir level sensor for electronics labs',
+    isActive: true
+  },
+  {
+    id: 'karunya-admin-composite',
+    name: 'Karunya Administration Composite',
+    kind: 'composite',
+    zone: { id: 'karunya-admin', name: 'Karunya Administration Block' },
+    location: { latitude: 10.936278, longitude: 76.744139 },
+    description: 'Composite monitoring for the central administration block',
+    isActive: true
   }
 ]
 
