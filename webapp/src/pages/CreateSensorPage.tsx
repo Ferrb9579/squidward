@@ -54,10 +54,41 @@ const RecenterMap = ({ position }: { position?: { lat: number; lng: number } }) 
   return null
 }
 
-const existingSensorIcon = L.divIcon({
-  className: 'existing-sensor-marker',
-  html: `<div style="width:14px;height:14px;border-radius:50%;background:#38bdf8;border:2px solid rgba(15,23,42,0.85);"></div>`
-})
+const kindColors: Record<SensorState['kind'], string> = {
+  flow: '#06b6d4',
+  pressure: '#f97316',
+  level: '#22c55e',
+  composite: '#a855f7'
+}
+
+const kindGlyphs: Record<SensorState['kind'], string> = {
+  flow: 'F',
+  pressure: 'P',
+  level: 'L',
+  composite: 'Σ'
+}
+
+const createExistingSensorIcon = (sensor: SensorState) => {
+  const color = kindColors[sensor.kind] ?? '#38bdf8'
+  const glyph = kindGlyphs[sensor.kind] ?? 'S'
+  const width = 28
+  const height = Math.round(width * 1.35)
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32" width="${width}" height="${height}" aria-hidden="true" focusable="false">
+      <path d="M12 1.8c-4.3 0-7.8 3.5-7.8 7.8 0 5.4 7.2 13.4 7.5 13.7a0.7 0.7 0 0 0 1 0c0.3-0.3 7.5-8.3 7.5-13.7 0-4.3-3.5-7.8-7.8-7.8Z" fill="${color}" stroke="rgba(15,23,42,0.9)" stroke-width="1.3" />
+      <circle cx="12" cy="11.2" r="5.2" fill="rgba(15, 23, 42, 0.82)" />
+      <text x="12" y="13.2" text-anchor="middle" font-family="'Inter',system-ui,-apple-system,'Segoe UI',sans-serif" font-size="7" font-weight="600" fill="#e2e8f0">${glyph}</text>
+      <ellipse cx="12" cy="28.5" rx="6" ry="2.1" fill="rgba(15, 23, 42, 0.28)" />
+    </svg>
+  `
+
+  return L.divIcon({
+    html: svg,
+    className: 'existing-sensor-marker',
+    iconSize: [width, height],
+    iconAnchor: [width / 2, height - 4]
+  })
+}
 
 interface SearchResult {
   place_id: string
@@ -335,7 +366,7 @@ const CreateSensorPage = () => {
               <Marker
                 key={sensor.id}
                 position={[sensor.location.latitude, sensor.location.longitude]}
-                icon={existingSensorIcon}
+                icon={createExistingSensorIcon(sensor)}
               />
             ))}
             <LocationSelector

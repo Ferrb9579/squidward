@@ -1,6 +1,7 @@
 import { Maximize2, Minimize2 } from 'lucide-react'
 import L from 'leaflet'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { FormEvent } from 'react'
 import {
   MapContainer,
   Marker,
@@ -13,7 +14,8 @@ import {
   emptyStateClass,
   panelBodyClass,
   panelClass,
-  panelHeaderClass
+  panelHeaderClass,
+  panelSectionClass
 } from '../styles/ui'
 import type { SensorState } from '../types'
 
@@ -90,6 +92,21 @@ const markerGlyphs: Record<SensorState['kind'], string> = {
   composite: 'Σ'
 }
 
+const searchMarkerIcon = L.divIcon({
+  className: 'search-result-marker',
+  html: `<div style="width:18px;height:18px;border-radius:50%;background:#38bdf8;border:3px solid rgba(15,23,42,0.88);"></div>`,
+  iconSize: [18, 18],
+  iconAnchor: [9, 18],
+  popupAnchor: [0, -12]
+})
+
+interface SearchResult {
+  place_id: string
+  display_name: string
+  lat: string
+  lon: string
+}
+
 const createSensorIcon = (sensor: SensorState, isSelected: boolean) => {
   const color = kindColors[sensor.kind] ?? '#38bdf8'
   const glyph = markerGlyphs[sensor.kind] ?? 'S'
@@ -148,6 +165,19 @@ export const MapPanel = ({
     [sensors, selectedSensorId]
   )
 
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [searchError, setSearchError] = useState<string | undefined>(undefined)
+  const [locationError, setLocationError] = useState<string | undefined>(undefined)
+  const [isSearching, setIsSearching] = useState(false)
+  const [isLocating, setIsLocating] = useState(false)
+  const [searchMarker, setSearchMarker] = useState<
+    { lat: number; lng: number; label?: string } | undefined
+  >(undefined)
+
+  const mapClassName = `w-full overflow-hidden rounded-2xl ${
+    isExpanded ? 'flex-1 h-full min-h-[480px]' : 'h-[360px]'
+  }`
   const initialSensor = useMemo(
     () => sensors.find((sensor) => sensor.isActive) ?? sensors[0],
     [sensors]
@@ -183,6 +213,86 @@ export const MapPanel = ({
   const handleToggleExpand = () => {
     if (!onToggleExpand) return
     onToggleExpand(!isExpanded)
+  }
+
+  const flyToLocation = (lat: number, lng: number, zoom = 17) => {
+    mapRef.current?.flyTo([lat, lng], zoom, { duration: 0.6 })
+  }
+
+  const handleSearchSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const query = searchQuery.trim()
+    if (!query) {
+      setSearchResults([])
+      setSearchError('Enter a location to search for.')
+      return
+    }
+
+    setIsSearching(true)
+    setSearchError(undefined)
+    setLocationError(undefined)
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=6`
+      )
+      if (!response.ok) {
+        throw new Error(`Search failed (${response.status})`)
+      }
+      const results = (await response.json()) as SearchResult[]
+      setSearchResults(results)
+      if (results.length === 0) {
+        setSearchError('No matches found for that query.')
+      }
+    } catch (error) {
+      console.error('Map search failed', error)
+      setSearchError(
+        error instanceof Error ? error.message : 'Unable to search for that location.'
+      )
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  const handleSelectResult = (result: SearchResult) => {
+    const lat = Number.parseFloat(result.lat)
+    const lng = Number.parseFloat(result.lon)
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      setSearchError('The selected result does not have valid coordinates.')
+      return
+    }
+    setSearchMarker({ lat, lng, label: result.display_name })
+    setSearchResults([])
+    setSearchQuery(result.display_name)
+    setSearchError(undefined)
+    setLocationError(undefined)
+    flyToLocation(lat, lng)
+  }
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported in this browser.')
+      return
+    }
+
+    setIsLocating(true)
+    setLocationError(undefined)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude
+        const lng = position.coords.longitude
+        setSearchMarker({ lat, lng, label: 'Current location' })
+        setSearchResults([])
+        setSearchQuery('')
+        setIsLocating(false)
+        flyToLocation(lat, lng)
+      },
+      (error) => {
+        console.error('Geolocation failed', error)
+        setIsLocating(false)
+        setLocationError('Unable to access current location.')
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    )
   }
 
   const popupMetrics = (sensor?: SensorState) => {
@@ -241,15 +351,72 @@ export const MapPanel = ({
           </button>
         )}
       </div>
-      <div className={`${panelBodyClass} flex-1 gap-0 px-0 pb-0 pt-0`}>
+      <div className={`${panelBodyClass} flex-1`}>
+        <div className={`${panelSectionClass} text-sm text-slate-200`}>
+          <form className="flex flex-col gap-2 sm:flex-row" onSubmit={handleSearchSubmit}>
+            <label htmlFor="map-search-input" className="sr-only">
+              Search for a location
+            </label>
+            <input
+              id="map-search-input"
+              value={searchQuery}
+              onChange={(event) => {
+                setSearchQuery(event.target.value)
+                if (searchError) setSearchError(undefined)
+              }}
+              placeholder="Search campus landmarks or addresses"
+              className="flex-1 rounded-lg border border-slate-700/50 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-sky-400/60 focus:outline-none"
+              disabled={isSearching}
+            />
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button
+                type="submit"
+                disabled={isSearching}
+                className={`${buttonBaseClass} justify-center text-sm disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                {isSearching ? 'Searching…' : 'Search'}
+              </button>
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                disabled={isLocating}
+                className={`${buttonBaseClass} justify-center text-sm disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                {isLocating ? 'Locating…' : 'Use current location'}
+              </button>
+            </div>
+          </form>
+          {searchError ? (
+            <p className="text-xs text-red-400">{searchError}</p>
+          ) : null}
+          {locationError ? (
+            <p className="text-xs text-red-400">{locationError}</p>
+          ) : null}
+          {searchMarker ? (
+            <p className="text-xs text-slate-300">
+              Showing pin at {searchMarker.label ?? `${searchMarker.lat.toFixed(5)}, ${searchMarker.lng.toFixed(5)}`}
+            </p>
+          ) : null}
+          {searchResults.length > 0 ? (
+            <ul className="max-h-44 overflow-y-auto rounded-lg border border-slate-800/60 bg-slate-900/80">
+              {searchResults.map((result) => (
+                <li key={result.place_id} className="border-b border-slate-800/60 last:border-none">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectResult(result)}
+                    className="block w-full px-3 py-2 text-left text-sm text-slate-100 transition hover:bg-slate-800/60"
+                  >
+                    {result.display_name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
         <MapContainer
           center={center}
           zoom={17}
-          className={`${
-            isExpanded
-              ? 'flex-1 h-full min-h-[480px] w-full overflow-hidden rounded-2xl'
-              : 'h-[360px] w-full overflow-hidden rounded-2xl'
-          }`}
+          className={mapClassName}
           scrollWheelZoom
           keyboard={false}
           ref={(instance) => {
@@ -261,6 +428,11 @@ export const MapPanel = ({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <RecenterOnSelection sensor={selectedSensor} />
+          {searchMarker ? (
+            <Marker position={[searchMarker.lat, searchMarker.lng]} icon={searchMarkerIcon}>
+              {searchMarker.label ? <Popup>{searchMarker.label}</Popup> : null}
+            </Marker>
+          ) : null}
           {sensors.map((sensor) => {
             const {
               location: { latitude, longitude }
