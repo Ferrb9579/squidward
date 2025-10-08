@@ -20,7 +20,7 @@ function App() {
       <header className="sticky top-0 z-40 border-b border-slate-800/60 bg-slate-950/80 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
           <div>
-            <h1 className="text-lg font-semibold text-slate-100">Hydrogrid Console</h1>
+            <h1 className="text-lg font-semibold text-slate-100">Squidward Console</h1>
             {/* <p className="text-xs text-slate-400">Manage sensors, ingestion keys, and live telemetry.</p> */}
           </div>
           <nav className="flex items-center gap-2 text-sm">

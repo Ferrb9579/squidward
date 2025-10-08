@@ -166,7 +166,7 @@ const AgentAssistant = () => {
         className="inline-flex items-center gap-2 rounded-full bg-sky-500/90 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg transition hover:bg-sky-400"
       >
         <Bot size={16} />
-        {isOpen ? 'Hide assistant' : 'Ask Hydrogrid'}
+  {isOpen ? 'Hide assistant' : 'Ask Squidward'}
       </button>
     </div>
   )

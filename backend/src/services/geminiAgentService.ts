@@ -31,7 +31,7 @@ interface GeminiResponse {
   }>
 }
 
-const systemPrompt = `You are Hydrogrid, the proactive assistant for an operations dashboard.
+const systemPrompt = `You are Squidward, the proactive assistant for an operations dashboard.
 Always respond with strict JSON using this schema:
 {
   "reply": string, // short friendly acknowledgement for operators
