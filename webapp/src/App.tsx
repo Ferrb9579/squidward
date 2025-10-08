@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import 'leaflet/dist/leaflet.css'
 import { OverviewCards } from './components/OverviewCards'
 import { LiveFeed } from './components/LiveFeed'
@@ -67,6 +67,8 @@ function App() {
     void loadAnalytics()
   }
 
+  const [isMapExpanded, setIsMapExpanded] = useState(false)
+
   return (
     <div className="flex min-h-full flex-col gap-6 px-6 pb-8 pt-6">
       <OverviewCards
@@ -82,11 +84,15 @@ function App() {
       )}
       <div className="flex flex-1 min-h-0 gap-6">
         <section className="flex min-w-0 flex-1 flex-col gap-6">
-          <MapPanel
-            sensors={sensors}
-            selectedSensorId={selectedSensorId}
-            onSelect={handleSelectSensor}
-          />
+          {!isMapExpanded && (
+            <MapPanel
+              sensors={sensors}
+              selectedSensorId={selectedSensorId}
+              onSelect={handleSelectSensor}
+              isExpanded={false}
+              onToggleExpand={setIsMapExpanded}
+            />
+          )}
           <SensorDetails
             sensor={selectedSensor}
             measurements={selectedMeasurements}
@@ -123,6 +129,19 @@ function App() {
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-slate-950/80 backdrop-blur">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-600/40 border-t-accent" />
           <p className="text-slate-100">Syncing with backend simulator…</p>
+        </div>
+      )}
+      {isMapExpanded && (
+        <div className="fixed inset-0 z-50 flex min-h-0 flex-col bg-slate-950/85 backdrop-blur-sm p-4 sm:p-6">
+          <div className="flex h-full w-full flex-1 min-h-0">
+            <MapPanel
+              sensors={sensors}
+              selectedSensorId={selectedSensorId}
+              onSelect={handleSelectSensor}
+              isExpanded
+              onToggleExpand={setIsMapExpanded}
+            />
+          </div>
         </div>
       )}
     </div>

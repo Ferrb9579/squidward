@@ -1,3 +1,4 @@
+import { Maximize2, Minimize2 } from 'lucide-react'
 import L from 'leaflet'
 import { useEffect, useMemo, useRef } from 'react'
 import {
@@ -7,13 +8,72 @@ import {
   TileLayer,
   useMap
 } from 'react-leaflet'
-import { emptyStateClass, panelBodyClass, panelClass, panelHeaderClass } from '../styles/ui'
+import {
+  buttonBaseClass,
+  emptyStateClass,
+  panelBodyClass,
+  panelClass,
+  panelHeaderClass
+} from '../styles/ui'
 import type { SensorState } from '../types'
+
+type MetricKey =
+  | 'flowRateLpm'
+  | 'pressureBar'
+  | 'levelPercent'
+  | 'temperatureCelsius'
+  | 'batteryPercent'
+  | 'healthScore'
+  | 'leakDetected'
+
+const metricOrder: MetricKey[] = [
+  'flowRateLpm',
+  'pressureBar',
+  'levelPercent',
+  'temperatureCelsius',
+  'batteryPercent',
+  'healthScore',
+  'leakDetected'
+]
+
+const metricLabel: Record<MetricKey, string> = {
+  flowRateLpm: 'Flow',
+  pressureBar: 'Pressure',
+  levelPercent: 'Level',
+  temperatureCelsius: 'Temperature',
+  batteryPercent: 'Battery',
+  healthScore: 'Health score',
+  leakDetected: 'Leak'
+}
+
+const formatMetricValue = (key: MetricKey, value: number | boolean) => {
+  if (value === undefined || value === null) return '—'
+  switch (key) {
+    case 'flowRateLpm':
+      return `${Number(value).toFixed(0)} L/min`
+    case 'pressureBar':
+      return `${Number(value).toFixed(2)} bar`
+    case 'levelPercent':
+      return `${Number(value).toFixed(1)}%`
+    case 'temperatureCelsius':
+      return `${Number(value).toFixed(1)} °C`
+    case 'batteryPercent':
+      return `${Number(value).toFixed(0)}%`
+    case 'healthScore':
+      return Number(value).toFixed(0)
+    case 'leakDetected':
+      return value ? 'Detected' : 'Clear'
+    default:
+      return String(value)
+  }
+}
 
 interface MapPanelProps {
   sensors: SensorState[]
   selectedSensorId?: string
   onSelect: (sensorId: string) => void
+  isExpanded?: boolean
+  onToggleExpand?: (expanded: boolean) => void
 }
 
 const kindColors: Record<SensorState['kind'], string> = {
@@ -76,7 +136,13 @@ const RecenterOnSelection = ({
   return null
 }
 
-export const MapPanel = ({ sensors, selectedSensorId, onSelect }: MapPanelProps) => {
+export const MapPanel = ({
+  sensors,
+  selectedSensorId,
+  onSelect,
+  isExpanded = false,
+  onToggleExpand
+}: MapPanelProps) => {
   const selectedSensor = useMemo(
     () => sensors.find((sensor) => sensor.id === selectedSensorId),
     [sensors, selectedSensorId]
@@ -104,9 +170,39 @@ export const MapPanel = ({ sensors, selectedSensorId, onSelect }: MapPanelProps)
 
   const center = initialCenterRef.current
 
+  const mapRef = useRef<L.Map | null>(null)
+
+  useEffect(() => {
+    if (!mapRef.current) return
+    const handle = window.setTimeout(() => {
+      mapRef.current?.invalidateSize()
+    }, 120)
+    return () => window.clearTimeout(handle)
+  }, [isExpanded])
+
+  const handleToggleExpand = () => {
+    if (!onToggleExpand) return
+    onToggleExpand(!isExpanded)
+  }
+
+  const popupMetrics = (sensor?: SensorState) => {
+    if (!sensor?.lastValues) return []
+    return metricOrder
+      .map((key) => {
+        const raw = sensor.lastValues?.[key as keyof typeof sensor.lastValues]
+        if (raw === undefined) return null
+        return {
+          key,
+          label: metricLabel[key],
+          value: formatMetricValue(key, raw)
+        }
+      })
+      .filter(Boolean) as Array<{ key: MetricKey; label: string; value: string }>
+  }
+
   if (!initialSensor || !center) {
     return (
-      <div className={panelClass}>
+      <div className={`${panelClass} ${isExpanded ? 'h-full w-full flex-1' : ''}`}>
         <div className={panelHeaderClass}>
           <h2 className="text-lg font-semibold text-slate-100">Campus map</h2>
         </div>
@@ -118,19 +214,47 @@ export const MapPanel = ({ sensors, selectedSensorId, onSelect }: MapPanelProps)
   }
 
   return (
-    <div className={panelClass}>
-      <div className={panelHeaderClass}>
-        <h2 className="text-lg font-semibold text-slate-100">Campus map</h2>
-        <p className="text-sm text-slate-400">Click a marker to inspect a sensor.</p>
+    <div className={`${panelClass} ${isExpanded ? 'h-full w-full flex-1' : ''}`}>
+      <div className={`${panelHeaderClass} gap-3 md:flex-row md:items-start md:justify-between`}>
+        <div>
+          <h2 className="text-lg font-semibold text-slate-100">Campus map</h2>
+          <p className="text-sm text-slate-400">Click a marker to inspect a sensor.</p>
+        </div>
+        {onToggleExpand && (
+          <button
+            type="button"
+            onClick={handleToggleExpand}
+            className={`${buttonBaseClass} text-xs`}
+            aria-label={isExpanded ? 'Exit full-screen map' : 'Expand map to full-screen'}
+          >
+            {isExpanded ? (
+              <>
+                <Minimize2 size={14} aria-hidden />
+                Exit full view
+              </>
+            ) : (
+              <>
+                <Maximize2 size={14} aria-hidden />
+                Fullscreen
+              </>
+            )}
+          </button>
+        )}
       </div>
-  <div className={`${panelBodyClass} p-0`}>
+      <div className={`${panelBodyClass} flex-1 gap-0 px-0 pb-0 pt-0`}>
         <MapContainer
           center={center}
           zoom={17}
-          minZoom={13}
-          className="h-[360px] w-full overflow-hidden rounded-2xl"
+          className={`${
+            isExpanded
+              ? 'flex-1 h-full min-h-[480px] w-full overflow-hidden rounded-2xl'
+              : 'h-[360px] w-full overflow-hidden rounded-2xl'
+          }`}
           scrollWheelZoom
           keyboard={false}
+          ref={(instance) => {
+            mapRef.current = instance
+          }}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -143,6 +267,7 @@ export const MapPanel = ({ sensors, selectedSensorId, onSelect }: MapPanelProps)
             } = sensor
             const isSelected = sensor.id === selectedSensorId
             const icon = createSensorIcon(sensor, isSelected)
+            const metrics = popupMetrics(sensor)
             return (
               <Marker
                 key={sensor.id}
@@ -153,19 +278,39 @@ export const MapPanel = ({ sensors, selectedSensorId, onSelect }: MapPanelProps)
                 }}
               >
                 <Popup>
-                  <div className="space-y-2 text-slate-800">
-                    <h3 className="text-base font-semibold">{sensor.name}</h3>
-                    <p className="flex items-center justify-between text-xs font-medium uppercase tracking-widest text-slate-500">
-                      <span>{sensor.zone.name}</span>
-                      <span>{sensor.kind.toUpperCase()}</span>
-                    </p>
-                    {sensor.lastReadingAt ? (
-                      <p className="text-xs text-slate-500">
-                        Updated {sensor.lastReadingAt.toLocaleTimeString()}
+                  <div className="space-y-3 text-slate-800">
+                    <div>
+                      <h3 className="text-base font-semibold">{sensor.name}</h3>
+                      <p className="flex items-center justify-between text-xs font-medium uppercase tracking-widest text-slate-500">
+                        <span>{sensor.zone.name}</span>
+                        <span>{sensor.kind.toUpperCase()}</span>
                       </p>
+                    </div>
+                    {metrics.length > 0 ? (
+                      <dl className="grid gap-2 text-xs text-slate-600">
+                        {metrics.map((metric) => (
+                          <div key={metric.key} className="flex items-center justify-between gap-3">
+                            <dt className="font-medium text-slate-500">{metric.label}</dt>
+                            <dd
+                              className={`text-slate-800 ${
+                                metric.key === 'leakDetected' && metric.value === 'Detected'
+                                  ? 'font-semibold text-orange-600'
+                                  : ''
+                              }`}
+                            >
+                              {metric.value}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
                     ) : (
-                      <p className="text-xs text-slate-500">Awaiting readings</p>
+                      <p className="text-xs text-slate-500">No recent telemetry.</p>
                     )}
+                    <div className="text-xs text-slate-500">
+                      {sensor.lastReadingAt
+                        ? `Updated ${sensor.lastReadingAt.toLocaleTimeString()}`
+                        : 'Awaiting readings'}
+                    </div>
                   </div>
                 </Popup>
               </Marker>
