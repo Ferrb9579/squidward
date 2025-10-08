@@ -26,10 +26,15 @@ const parseList = (value: string | undefined) =>
     .map((entry) => entry.trim())
     .filter((entry) => entry.length > 0)
 
+const parseString = (value: string | undefined, fallback: string) => {
+  const trimmed = value?.trim()
+  return trimmed && trimmed.length > 0 ? trimmed : fallback
+}
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: parseNumber(process.env.PORT, 4000),
-  mongoUri: process.env.MONGO_URI ?? 'mongodb://localhost:27017/squidward',
+  mongoUri: parseString(process.env.MONGO_URI, 'mongodb://localhost:27017/squidward'),
   simulationIntervalMs: parseNumber(process.env.SIMULATION_INTERVAL_MS, 5000),
   email: {
     host: process.env.EMAIL_HOST ?? '',
