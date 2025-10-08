@@ -1,3 +1,4 @@
+/* Legacy styles migrated to Tailwind utilities.
 @layer base {
   :root {
     color-scheme: dark;
@@ -642,9 +643,7 @@
 }
 
 .alert-center {
-  max-height: 28rem;
   min-height: 0;
-  overflow: hidden;
 }
 
 .alert-center__header {
@@ -893,9 +892,10 @@
 }
 
 .usage-analytics__grid {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 1.25rem;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  align-items: stretch;
   min-height: 320px;
 }
 
@@ -908,6 +908,7 @@
   border-radius: var(--radius-md);
   padding: 1rem;
   min-height: 0;
+  flex: 1 1 260px;
 }
 
 .usage-analytics__section header {
@@ -924,7 +925,7 @@
 }
 
 .usage-analytics__section--primary {
-  grid-column: 1/-1;
+  flex: 1 1 100%;
 }
 
 .usage-analytics__trend-label {
@@ -958,6 +959,7 @@
   flex-direction: column;
   gap: 0.65rem;
 }
+*/
 
 .usage-analytics__zone-header {
   display: flex;

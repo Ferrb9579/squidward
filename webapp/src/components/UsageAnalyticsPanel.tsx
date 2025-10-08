@@ -16,6 +16,14 @@ import {
 } from 'chart.js'
 import 'chartjs-adapter-date-fns'
 import { Line } from 'react-chartjs-2'
+import {
+  buttonBaseClass,
+  emptyStateClass,
+  panelBodyClass,
+  panelClass,
+  panelHeaderClass,
+  panelSectionClass
+} from '../styles/ui'
 import type { UsageAnalytics } from '../types'
 
 ChartJS.register(
@@ -174,69 +182,68 @@ export const UsageAnalyticsPanel = ({
   const showEmptyState = !isLoading && !analytics
 
   return (
-    <div className="panel usage-analytics">
-      <div className="panel__header usage-analytics__header">
-        <div>
-          <h2>Usage analytics</h2>
-          <p className="panel__subtext">
+    <div className={panelClass}>
+      <div className={`${panelHeaderClass} gap-3 md:flex-row md:items-start md:justify-between`}>
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold text-slate-100">Usage analytics</h2>
+          <p className="text-sm text-slate-400">
             Flow, pressure, and reservoir insight over the last few hours.
           </p>
         </div>
-        <div className="usage-analytics__meta">
-          <span className="usage-analytics__range">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="rounded-lg border border-slate-700/50 bg-slate-900/60 px-3 py-1 text-xs text-slate-300">
             {analytics ? formatDateRange(analytics.windowStart, analytics.windowEnd) : '—'}
           </span>
-          <button type="button" className="usage-analytics__refresh" onClick={onRefresh}>
+          <button type="button" className={buttonBaseClass} onClick={onRefresh}>
             Refresh
           </button>
         </div>
       </div>
-      <div className="panel__body usage-analytics__body">
+  <div className={`${panelBodyClass} gap-5`}>
         {isLoading ? (
-          <div className="panel__body--empty">
-            <p>Loading usage analytics…</p>
-          </div>
+          <div className={emptyStateClass}>Loading usage analytics…</div>
         ) : showEmptyState ? (
-          <div className="panel__body--empty">
-            <p>No analytics data yet. Waiting on measurements.</p>
-          </div>
+          <div className={emptyStateClass}>No analytics data yet. Waiting on measurements.</div>
         ) : analytics ? (
-          <div className="usage-analytics__grid">
-            <section className="usage-analytics__section usage-analytics__section--primary">
-              <header>
-                <h3>Flow trend</h3>
-                <span className="usage-analytics__trend-label">
+          <div className="flex flex-wrap gap-4">
+            <section className={`${panelSectionClass} basis-full`}>
+              <header className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-slate-100">Flow trend</h3>
+                <span className="text-xs text-slate-400">
                   Latest avg: {formatNumber(latestFlow, 1)} L/min
                 </span>
               </header>
               {flowChartData ? (
-                <div className="usage-analytics__chart">
+                <div className="relative h-48 w-full">
                   <Line data={flowChartData} options={flowChartOptions} />
                 </div>
               ) : (
-                <p className="usage-analytics__chart-empty">Not enough readings for a trend line.</p>
+                <p className="text-sm text-slate-400">Not enough readings for a trend line.</p>
               )}
             </section>
-            <section className="usage-analytics__section">
-              <header>
-                <h3>Zones by flow</h3>
+            <section className={panelSectionClass}>
+              <header className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-slate-100">Zones by flow</h3>
               </header>
               {analytics.zoneFlow.length === 0 ? (
-                <p className="usage-analytics__empty">Awaiting zone measurements.</p>
+                <p className="text-sm text-slate-400">Awaiting zone measurements.</p>
               ) : (
-                <ul className="usage-analytics__zones">
+                <ul className="flex flex-col gap-3">
                   {analytics.zoneFlow.map((zone) => {
                     const width = maxZoneFlow > 0 ? (zone.avgFlowLpm / maxZoneFlow) * 100 : 0
                     return (
-                      <li key={zone.zoneId}>
-                        <div className="usage-analytics__zone-header">
+                      <li key={zone.zoneId} className="space-y-2">
+                        <div className="flex items-center justify-between text-sm text-slate-300">
                           <span>{zone.zoneName}</span>
                           <span>{formatNumber(zone.avgFlowLpm, 1)} L/min</span>
                         </div>
-                        <div className="usage-analytics__zone-bar">
-                          <span style={{ width: `${Math.max(width, 4)}%` }} />
+                        <div className="h-2 rounded-full bg-slate-800/80">
+                          <span
+                            className="block h-full rounded-full bg-sky-400/70"
+                            style={{ width: `${Math.max(width, 4)}%` }}
+                          />
                         </div>
-                        <div className="usage-analytics__zone-meta">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
                           Peak {formatNumber(zone.peakFlowLpm, 1)} L/min · {zone.sensorsReporting} sensors
                         </div>
                       </li>
@@ -245,21 +252,26 @@ export const UsageAnalyticsPanel = ({
                 </ul>
               )}
             </section>
-            <section className="usage-analytics__section">
-              <header>
-                <h3>Top flow events</h3>
+            <section className={panelSectionClass}>
+              <header className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-slate-100">Top flow events</h3>
               </header>
               {analytics.topFlowEvents.length === 0 ? (
-                <p className="usage-analytics__empty">No recent flow spikes.</p>
+                <p className="text-sm text-slate-400">No recent flow spikes.</p>
               ) : (
-                <ul className="usage-analytics__events">
+                <ul className="flex flex-col gap-3">
                   {analytics.topFlowEvents.map((event) => (
-                    <li key={`${event.sensorId}-${event.timestamp.toISOString()}`}>
-                      <div className="usage-analytics__event-main">
-                        <strong>{formatNumber(event.value, 0)} L/min</strong>
+                    <li
+                      key={`${event.sensorId}-${event.timestamp.toISOString()}`}
+                      className="rounded-lg border border-slate-700/40 bg-slate-900/50 p-3"
+                    >
+                      <div className="flex items-center justify-between text-sm text-slate-200">
+                        <strong className="text-base text-slate-100">
+                          {formatNumber(event.value, 0)} L/min
+                        </strong>
                         <span>{event.sensorName}</span>
                       </div>
-                      <div className="usage-analytics__event-meta">
+                      <div className="mt-2 flex flex-wrap items-center justify-between text-xs text-slate-400">
                         <span>{event.zone.name}</span>
                         <span title={event.timestamp.toLocaleString()}>
                           {formatRelative(event.timestamp)}
@@ -270,52 +282,69 @@ export const UsageAnalyticsPanel = ({
                 </ul>
               )}
             </section>
-            <section className="usage-analytics__section">
-              <header>
-                <h3>Pressure extremes</h3>
+            <section className={panelSectionClass}>
+              <header className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-slate-100">Pressure extremes</h3>
               </header>
-              <div className="usage-analytics__extremes">
-                <div>
-                  <h4>Highest</h4>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
+                    Highest
+                  </h4>
                   {analytics.pressureExtremes.max ? (
-                    <div className="usage-analytics__extreme-card">
-                      <strong>{formatNumber(analytics.pressureExtremes.max.value, 2)} bar</strong>
+                    <div className="rounded-lg border border-slate-700/40 bg-slate-900/50 p-3 text-sm text-slate-200">
+                      <strong className="block text-base text-slate-100">
+                        {formatNumber(analytics.pressureExtremes.max.value, 2)} bar
+                      </strong>
                       <span>{analytics.pressureExtremes.max.sensorName}</span>
-                      <span>{analytics.pressureExtremes.max.zone.name}</span>
+                      <span className="block text-xs text-slate-400">
+                        {analytics.pressureExtremes.max.zone.name}
+                      </span>
                     </div>
                   ) : (
-                    <p className="usage-analytics__empty">—</p>
+                    <p className="text-sm text-slate-400">—</p>
                   )}
                 </div>
-                <div>
-                  <h4>Lowest</h4>
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
+                    Lowest
+                  </h4>
                   {analytics.pressureExtremes.min ? (
-                    <div className="usage-analytics__extreme-card">
-                      <strong>{formatNumber(analytics.pressureExtremes.min.value, 2)} bar</strong>
+                    <div className="rounded-lg border border-slate-700/40 bg-slate-900/50 p-3 text-sm text-slate-200">
+                      <strong className="block text-base text-slate-100">
+                        {formatNumber(analytics.pressureExtremes.min.value, 2)} bar
+                      </strong>
                       <span>{analytics.pressureExtremes.min.sensorName}</span>
-                      <span>{analytics.pressureExtremes.min.zone.name}</span>
+                      <span className="block text-xs text-slate-400">
+                        {analytics.pressureExtremes.min.zone.name}
+                      </span>
                     </div>
                   ) : (
-                    <p className="usage-analytics__empty">—</p>
+                    <p className="text-sm text-slate-400">—</p>
                   )}
                 </div>
               </div>
             </section>
-            <section className="usage-analytics__section">
-              <header>
-                <h3>Reservoir watch</h3>
+            <section className={panelSectionClass}>
+              <header className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-slate-100">Reservoir watch</h3>
               </header>
               {analytics.lowReservoirs.length === 0 ? (
-                <p className="usage-analytics__empty">All reservoirs above 35% capacity.</p>
+                <p className="text-sm text-slate-400">All reservoirs above 35% capacity.</p>
               ) : (
-                <ul className="usage-analytics__reservoirs">
+                <ul className="flex flex-col gap-3">
                   {analytics.lowReservoirs.map((entry) => (
-                    <li key={`${entry.sensorId}-${entry.timestamp.toISOString()}`}>
-                      <div className="usage-analytics__reservoir-main">
+                    <li
+                      key={`${entry.sensorId}-${entry.timestamp.toISOString()}`}
+                      className="rounded-lg border border-slate-700/40 bg-slate-900/50 p-3"
+                    >
+                      <div className="flex items-center justify-between text-sm text-slate-200">
                         <span>{entry.sensorName}</span>
-                        <strong>{formatNumber(entry.value, 1)}%</strong>
+                        <strong className="text-base text-slate-100">
+                          {formatNumber(entry.value, 1)}%
+                        </strong>
                       </div>
-                      <div className="usage-analytics__reservoir-meta">
+                      <div className="mt-2 flex flex-wrap items-center justify-between text-xs text-slate-400">
                         <span>{entry.zone.name}</span>
                         <span title={entry.timestamp.toLocaleString()}>
                           {formatRelative(entry.timestamp)}

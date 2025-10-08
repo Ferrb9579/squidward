@@ -1,3 +1,9 @@
+import {
+  emptyStateClass,
+  panelBodyClass,
+  panelClass,
+  panelHeaderClass
+} from '../styles/ui'
 import type { Measurement, SensorState } from '../types'
 
 interface SensorDetailsProps {
@@ -33,11 +39,11 @@ const renderMetricValue = (value: number | boolean | undefined) => {
 export const SensorDetails = ({ sensor, measurements }: SensorDetailsProps) => {
   if (!sensor) {
     return (
-      <div className="panel sensor-details">
-        <div className="panel__header">
-          <h2>Sensor details</h2>
+      <div className={panelClass}>
+        <div className={panelHeaderClass}>
+          <h2 className="text-lg font-semibold text-slate-100">Sensor details</h2>
         </div>
-        <div className="panel__body panel__body--empty">
+        <div className={`${panelBodyClass} ${emptyStateClass}`}>
           <p>Select a sensor to view its telemetry timeline.</p>
         </div>
       </div>
@@ -59,30 +65,38 @@ export const SensorDetails = ({ sensor, measurements }: SensorDetailsProps) => {
   const history = measurements.slice(0, 10)
 
   return (
-    <div className="panel sensor-details">
-      <div className="panel__header">
-        <h2>{sensor.name}</h2>
-        <p className="panel__subtext">
+    <div className={panelClass}>
+      <div className={panelHeaderClass}>
+        <h2 className="text-lg font-semibold text-slate-100">{sensor.name}</h2>
+        <p className="text-sm text-slate-400">
           {sensor.zone.name} • {sensor.kind.toUpperCase()}
         </p>
       </div>
-      <div className="panel__body sensor-details__body">
-        <section className="sensor-details__section">
-          <h3>Live metrics</h3>
-          <dl className="sensor-details__metrics">
+      <div className={`${panelBodyClass} max-h-[32rem] gap-5 overflow-y-auto`}>
+        <section className="space-y-4 rounded-xl border border-slate-700/40 bg-slate-900/60 p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">
+            Live metrics
+          </h3>
+          <dl className="grid gap-4 sm:grid-cols-2">
             {detailMetrics.map(([key, value]) => {
               if (key === 'leakDetected') return null
               const label = metricLabels[key] ?? key
               return (
-                <div key={key} className="sensor-details__metric">
-                  <dt>{label}</dt>
-                  <dd>{renderMetricValue(value as number | undefined)}</dd>
+                <div key={key} className="flex flex-col gap-1 rounded-lg bg-slate-900/40 p-3">
+                  <dt className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
+                    {label}
+                  </dt>
+                  <dd className="text-sm font-semibold text-slate-100">
+                    {renderMetricValue(value as number | undefined)}
+                  </dd>
                 </div>
               )
             })}
-            <div className="sensor-details__metric">
-              <dt>Leak status</dt>
-              <dd>
+            <div className="flex flex-col gap-1 rounded-lg bg-slate-900/40 p-3">
+              <dt className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
+                Leak status
+              </dt>
+              <dd className="text-sm font-semibold text-slate-100">
                 {renderMetricValue(
                   detailMetrics.find(([key]) => key === 'leakDetected')?.[1] as
                     | boolean
@@ -92,20 +106,25 @@ export const SensorDetails = ({ sensor, measurements }: SensorDetailsProps) => {
             </div>
           </dl>
         </section>
-        <section className="sensor-details__section">
-          <h3>Recent timeline</h3>
-          <ul className="sensor-details__timeline">
+        <section className="space-y-4 rounded-xl border border-slate-700/40 bg-slate-900/60 p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">
+            Recent timeline
+          </h3>
+          <ul className="space-y-3">
             {history.length === 0 ? (
-              <li className="sensor-details__timeline-empty">
+              <li className="rounded-lg border border-slate-700/40 bg-slate-900/40 p-4 text-center text-sm text-slate-400">
                 Awaiting measurements for this sensor.
               </li>
             ) : (
               history.map((entry) => (
-                <li key={entry.id}>
-                  <span className="sensor-details__timeline-time">
+                <li
+                  key={entry.id}
+                  className="space-y-2 rounded-lg border border-slate-700/40 bg-slate-900/40 p-4"
+                >
+                  <span className="text-xs text-slate-400">
                     {formatDateTime(entry.timestamp)}
                   </span>
-                  <div className="sensor-details__timeline-values">
+                  <div className="flex flex-wrap gap-2 text-xs text-slate-300">
                     {entry.flowRateLpm !== undefined && (
                       <span>{entry.flowRateLpm.toFixed(0)} L/min</span>
                     )}
@@ -118,35 +137,47 @@ export const SensorDetails = ({ sensor, measurements }: SensorDetailsProps) => {
                     {entry.healthScore !== undefined && (
                       <span>Health {entry.healthScore}</span>
                     )}
-                    {entry.leakDetected && <span className="tag tag--alert">Leak?</span>}
+                    {entry.leakDetected && (
+                      <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-widest text-orange-200">
+                        Leak?
+                      </span>
+                    )}
                   </div>
                 </li>
               ))
             )}
           </ul>
         </section>
-        <section className="sensor-details__section">
-          <h3>Metadata</h3>
-          <dl className="sensor-details__meta">
-            <div>
-              <dt>Installed</dt>
-              <dd>{formatDateTime(sensor.createdAt)}</dd>
+        <section className="space-y-4 rounded-xl border border-slate-700/40 bg-slate-900/60 p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">
+            Metadata
+          </h3>
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <dt className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
+                Installed
+              </dt>
+              <dd className="text-sm text-slate-200">{formatDateTime(sensor.createdAt)}</dd>
             </div>
-            <div>
-              <dt>Last service</dt>
-              <dd>{formatDateTime(sensor.updatedAt)}</dd>
+            <div className="flex flex-col gap-1">
+              <dt className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
+                Last service
+              </dt>
+              <dd className="text-sm text-slate-200">{formatDateTime(sensor.updatedAt)}</dd>
             </div>
-            <div>
-              <dt>Coordinates</dt>
-              <dd>
-                {sensor.location.latitude.toFixed(5)},
-                {' '}
-                {sensor.location.longitude.toFixed(5)}
+            <div className="flex flex-col gap-1">
+              <dt className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
+                Coordinates
+              </dt>
+              <dd className="text-sm text-slate-200">
+                {sensor.location.latitude.toFixed(5)}, {sensor.location.longitude.toFixed(5)}
               </dd>
             </div>
-            <div>
-              <dt>Status</dt>
-              <dd>{sensor.isActive ? 'Active' : 'Offline'}</dd>
+            <div className="flex flex-col gap-1">
+              <dt className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">
+                Status
+              </dt>
+              <dd className="text-sm text-slate-200">{sensor.isActive ? 'Active' : 'Offline'}</dd>
             </div>
           </dl>
         </section>

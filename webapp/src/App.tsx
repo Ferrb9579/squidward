@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from 'react'
 import 'leaflet/dist/leaflet.css'
-import './App.css'
 import { OverviewCards } from './components/OverviewCards'
 import { LiveFeed } from './components/LiveFeed'
 import { MapPanel } from './components/MapPanel'
@@ -69,19 +68,20 @@ function App() {
   }
 
   return (
-    <div className="dashboard">
+    <div className="flex min-h-full flex-col gap-6 px-6 pb-8 pt-6">
       <OverviewCards
         overview={overview}
         lastCycleAt={lastCycleAt}
         streamStatus={streamStatus}
       />
       {error && (
-        <div className="dashboard__banner dashboard__banner--error">
-          <strong>Heads up:</strong> {error}
+        <div className="rounded-xl border border-rose-500/40 bg-rose-500/15 px-5 py-4 text-sm text-rose-100">
+          <strong className="mr-1 font-semibold">Heads up:</strong>
+          {error}
         </div>
       )}
-      <div className="dashboard__content">
-        <section className="dashboard__main">
+      <div className="flex flex-1 min-h-0 gap-6">
+        <section className="flex min-w-0 flex-1 flex-col gap-6">
           <MapPanel
             sensors={sensors}
             selectedSensorId={selectedSensorId}
@@ -97,7 +97,7 @@ function App() {
             onRefresh={handleRefreshAnalytics}
           />
         </section>
-        <aside className="dashboard__sidebar">
+        <aside className="flex h-full w-[340px] min-w-[280px] flex-col gap-6 overflow-y-auto pr-1.5">
           <SensorList
             sensors={sensors}
             selectedSensorId={selectedSensorId}
@@ -120,9 +120,9 @@ function App() {
         </aside>
       </div>
       {isLoading && sensors.length === 0 && (
-        <div className="dashboard__loading-overlay">
-          <div className="spinner" />
-          <p>Syncing with backend simulator…</p>
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-slate-950/80 backdrop-blur">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-600/40 border-t-accent" />
+          <p className="text-slate-100">Syncing with backend simulator…</p>
         </div>
       )}
     </div>

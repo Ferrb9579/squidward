@@ -1,46 +1,63 @@
 @import "tailwindcss";
 
-* {
-	box-sizing: border-box;
-}
+@layer base {
+	:root {
+		color-scheme: dark;
+		--bg: #020617;
+		--panel-bg: rgba(15, 23, 42, 0.85);
+		--panel-border: rgba(51, 65, 85, 0.4);
+		--muted: #94a3b8;
+		--muted-strong: #e2e8f0;
+		--accent: #38bdf8;
+		--alert: #f97316;
+		--success: #22c55e;
+		--error: #ef4444;
+		--radius-lg: 1rem;
+		--radius-md: 0.75rem;
+	}
 
-html,
-body,
-#root {
-	height: 100%;
-}
+	* {
+		box-sizing: border-box;
+	}
 
-body {
-	margin: 0;
-	font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont,
-		'Helvetica Neue', sans-serif;
-	background: var(--bg);
-	color: #e2e8f0;
-	-webkit-font-smoothing: antialiased;
-}
+	html,
+	body,
+	#root {
+		height: 100%;
+	}
 
-a {
-	color: var(--accent);
-}
+	body {
+		margin: 0;
+		font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont,
+			'Helvetica Neue', sans-serif;
+		background: var(--bg);
+		color: #e2e8f0;
+		-webkit-font-smoothing: antialiased;
+	}
 
-button {
-	font: inherit;
-	color: inherit;
-	cursor: pointer;
-	background: none;
-	border: none;
-	padding: 0;
-}
+	a {
+		color: var(--accent);
+	}
 
-::-webkit-scrollbar {
-	width: 8px;
-}
+	button {
+		font: inherit;
+		color: inherit;
+		cursor: pointer;
+		background: none;
+		border: none;
+		padding: 0;
+	}
 
-::-webkit-scrollbar-track {
-	background: rgba(15, 23, 42, 0.4);
-}
+	::-webkit-scrollbar {
+		width: 8px;
+	}
 
-::-webkit-scrollbar-thumb {
-	background: rgba(56, 189, 248, 0.3);
-	border-radius: 999px;
+	::-webkit-scrollbar-track {
+		background: rgba(15, 23, 42, 0.4);
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: rgba(56, 189, 248, 0.3);
+		border-radius: 999px;
+	}
 }

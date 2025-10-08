@@ -1,4 +1,10 @@
 import { useMemo, useState } from 'react'
+import {
+  emptyStateClass,
+  panelBodyClass,
+  panelClass,
+  panelHeaderClass
+} from '../styles/ui'
 import type { SensorState } from '../types'
 
 interface SensorListProps {
@@ -50,49 +56,63 @@ export const SensorList = ({ sensors, selectedSensorId, onSelect }: SensorListPr
   const zoneEntries = Object.values(groupedSensors)
 
   return (
-    <div className="panel sensor-list">
-      <div className="panel__header">
-        <h2>Sensors</h2>
+    <div className={panelClass}>
+      <div className={`${panelHeaderClass} gap-3`}>
+        <h2 className="text-lg font-semibold text-slate-100">Sensors</h2>
         <input
-          className="sensor-list__search"
+          className="w-full rounded-lg border border-slate-700/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:border-sky-400/60 focus:outline-none focus:ring-0"
           placeholder="Search by name or zone"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
       </div>
-      <div className="panel__body sensor-list__body">
+  <div className={`${panelBodyClass} gap-5 overflow-y-auto`}>
         {zoneEntries.length === 0 ? (
-          <p className="panel__empty">No sensors match your filter.</p>
+          <p className={emptyStateClass}>No sensors match your filter.</p>
         ) : (
           zoneEntries.map(({ zone, items }) => (
-            <section key={zone.id} className="sensor-list__group">
-              <header className="sensor-list__group-header">
+            <section key={zone.id} className="space-y-3">
+              <header className="flex items-center justify-between text-xs font-medium uppercase tracking-widest text-slate-400">
                 <h3>{zone.name}</h3>
-                <span>{items.length}</span>
+                <span className="rounded-full bg-slate-800/70 px-2 py-0.5 text-[0.7rem] text-slate-300">
+                  {items.length}
+                </span>
               </header>
-              <ul className="sensor-list__items">
+              <ul className="flex flex-col gap-2">
                 {items.map((sensor) => {
                   const lastSeen = sensor.lastReadingAt
                     ? timeFormatter.format(sensor.lastReadingAt)
                     : '—'
-                  const itemClass = [
-                    'sensor-list__item',
-                    sensor.id === selectedSensorId ? 'sensor-list__item--active' : '',
-                    sensor.isActive ? '' : 'sensor-list__item--inactive'
-                  ]
-                    .filter(Boolean)
-                    .join(' ')
+                  const baseItem = 'rounded-xl border border-slate-700/50 bg-slate-900/60 transition hover:border-sky-400/50'
+                  const activeItem = sensor.id === selectedSensorId
+                    ? ' border-sky-400/70 bg-sky-500/10 shadow-panel'
+                    : ''
+                  const inactiveItem = sensor.isActive ? '' : ' opacity-50'
 
                   return (
-                    <li key={sensor.id} className={itemClass}>
-                      <button type="button" onClick={() => onSelect(sensor.id)}>
-                        <div className="sensor-list__item-main">
-                          <span className="sensor-list__item-name">{sensor.name}</span>
-                          <span className={`sensor-kind sensor-kind--${sensor.kind}`}>
+                    <li key={sensor.id} className={`${baseItem}${activeItem}${inactiveItem}`}>
+                      <button
+                        type="button"
+                        className="flex w-full flex-col gap-2 px-4 py-3 text-left"
+                        onClick={() => onSelect(sensor.id)}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-semibold text-slate-100">{sensor.name}</span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
+                              sensor.kind === 'flow'
+                                ? 'bg-cyan-500/20 text-cyan-200'
+                                : sensor.kind === 'pressure'
+                                  ? 'bg-orange-500/20 text-orange-200'
+                                  : sensor.kind === 'level'
+                                    ? 'bg-emerald-500/20 text-emerald-200'
+                                    : 'bg-violet-500/20 text-violet-200'
+                            }`}
+                          >
                             {sensor.kind}
                           </span>
                         </div>
-                        <div className="sensor-list__item-meta">
+                        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs text-slate-400">
                           <span>{sensor.zone.name}</span>
                           <span>Updated {lastSeen}</span>
                         </div>

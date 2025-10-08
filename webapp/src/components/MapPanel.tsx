@@ -7,6 +7,7 @@ import {
   TileLayer,
   useMap
 } from 'react-leaflet'
+import { emptyStateClass, panelBodyClass, panelClass, panelHeaderClass } from '../styles/ui'
 import type { SensorState } from '../types'
 
 interface MapPanelProps {
@@ -105,11 +106,11 @@ export const MapPanel = ({ sensors, selectedSensorId, onSelect }: MapPanelProps)
 
   if (!initialSensor || !center) {
     return (
-      <div className="panel map-panel">
-        <div className="panel__header">
-          <h2>Campus map</h2>
+      <div className={panelClass}>
+        <div className={panelHeaderClass}>
+          <h2 className="text-lg font-semibold text-slate-100">Campus map</h2>
         </div>
-        <div className="panel__body panel__body--empty">
+        <div className={`${panelBodyClass} ${emptyStateClass}`}>
           <p>No sensors available yet. Data will appear once the simulator seeds sensors.</p>
         </div>
       </div>
@@ -117,17 +118,17 @@ export const MapPanel = ({ sensors, selectedSensorId, onSelect }: MapPanelProps)
   }
 
   return (
-    <div className="panel map-panel">
-      <div className="panel__header">
-        <h2>Campus map</h2>
-        <p className="panel__subtext">Click a marker to inspect a sensor.</p>
+    <div className={panelClass}>
+      <div className={panelHeaderClass}>
+        <h2 className="text-lg font-semibold text-slate-100">Campus map</h2>
+        <p className="text-sm text-slate-400">Click a marker to inspect a sensor.</p>
       </div>
-      <div className="map-panel__map">
+  <div className={`${panelBodyClass} p-0`}>
         <MapContainer
           center={center}
           zoom={17}
           minZoom={13}
-          className="map-panel__container"
+          className="h-[360px] w-full overflow-hidden rounded-2xl"
           scrollWheelZoom
           keyboard={false}
         >
@@ -152,18 +153,18 @@ export const MapPanel = ({ sensors, selectedSensorId, onSelect }: MapPanelProps)
                 }}
               >
                 <Popup>
-                  <div className="map-popup">
-                    <h3>{sensor.name}</h3>
-                    <p className="map-popup__meta">
+                  <div className="space-y-2 text-slate-800">
+                    <h3 className="text-base font-semibold">{sensor.name}</h3>
+                    <p className="flex items-center justify-between text-xs font-medium uppercase tracking-widest text-slate-500">
                       <span>{sensor.zone.name}</span>
                       <span>{sensor.kind.toUpperCase()}</span>
                     </p>
                     {sensor.lastReadingAt ? (
-                      <p className="map-popup__timestamp">
+                      <p className="text-xs text-slate-500">
                         Updated {sensor.lastReadingAt.toLocaleTimeString()}
                       </p>
                     ) : (
-                      <p className="map-popup__timestamp">Awaiting readings</p>
+                      <p className="text-xs text-slate-500">Awaiting readings</p>
                     )}
                   </div>
                 </Popup>

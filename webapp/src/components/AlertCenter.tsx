@@ -8,6 +8,15 @@ import {
   OctagonAlert,
   RefreshCw
 } from 'lucide-react'
+import {
+  badgeBaseClass,
+  buttonBaseClass,
+  emptyStateClass,
+  panelBodyClass,
+  panelClass,
+  panelHeaderClass,
+  primaryButtonClass
+} from '../styles/ui'
 import type { LeakAlert } from '../types'
 
 interface AlertCenterProps {
@@ -52,8 +61,8 @@ const severityLabel: Record<LeakAlert['severity'], string> = {
 }
 
 const severityClassName: Record<LeakAlert['severity'], string> = {
-  warning: 'alert-badge alert-badge--warning',
-  critical: 'alert-badge alert-badge--critical'
+  warning: `${badgeBaseClass} border border-orange-400/60 bg-orange-500/20 text-orange-100`,
+  critical: `${badgeBaseClass} border border-rose-500/60 bg-rose-500/20 text-rose-100`
 }
 
 const severityIcon: Record<LeakAlert['severity'], ReactElement> = {
@@ -88,91 +97,86 @@ const AlertList = ({
   onResolve: (alertId: string) => void
   onFocusSensor?: (sensorId: string) => void
 }) => (
-  <ul className="alert-center__list">
+  <ul className="flex flex-col gap-4">
     {items.map((alert) => (
-      <li key={alert.id} className="alert-item">
-        <div className="alert-item__header">
+      <li
+        key={alert.id}
+        className="flex flex-col gap-3 rounded-2xl border border-slate-700/45 bg-slate-900/75 p-4 shadow-card"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <span className={severityClassName[alert.severity]}>
             {severityIcon[alert.severity]}
             {severityLabel[alert.severity]}
           </span>
-          <span className="alert-item__metric">{metricLabel[alert.metric]}</span>
-          <span className="alert-item__time" title={alert.triggeredAt.toLocaleString()}>
+          <span className="text-sm font-medium text-slate-200">{metricLabel[alert.metric]}</span>
+          <span className="text-xs text-slate-400" title={alert.triggeredAt.toLocaleString()}>
             {formatSince(alert.triggeredAt)} • {timeFormatter.format(alert.triggeredAt)}
           </span>
         </div>
-        <div className="alert-item__body">
-          <div className="alert-item__message">{alert.message}</div>
-          <dl className="alert-item__meta">
-            <div>
-              <dt>Sensor</dt>
-              <dd>{alert.sensorName}</dd>
+        <div className="space-y-3">
+          <div className="text-sm text-slate-100">{alert.message}</div>
+          <dl className="grid gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <dt className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">Sensor</dt>
+              <dd className="text-sm text-slate-200">{alert.sensorName}</dd>
             </div>
-            <div>
-              <dt>Zone</dt>
-              <dd>{alert.zone.name}</dd>
+            <div className="flex flex-col gap-1">
+              <dt className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">Zone</dt>
+              <dd className="text-sm text-slate-200">{alert.zone.name}</dd>
             </div>
             {alert.currentValue !== undefined && (
-              <div>
-                <dt>Current</dt>
-                <dd>{formatValue(alert.currentValue, metricUnits[alert.metric])}</dd>
+              <div className="flex flex-col gap-1">
+                <dt className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">Current</dt>
+                <dd className="text-sm text-slate-200">
+                  {formatValue(alert.currentValue, metricUnits[alert.metric])}
+                </dd>
               </div>
             )}
             {alert.baselineValue !== undefined && (
-              <div>
-                <dt>Baseline</dt>
-                <dd>{formatValue(alert.baselineValue, metricUnits[alert.metric])}</dd>
+              <div className="flex flex-col gap-1">
+                <dt className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">Baseline</dt>
+                <dd className="text-sm text-slate-200">
+                  {formatValue(alert.baselineValue, metricUnits[alert.metric])}
+                </dd>
               </div>
             )}
             {alert.delta !== undefined && (
-              <div>
-                <dt>Change</dt>
-                <dd>{formatValue(alert.delta, metricUnits[alert.metric])}</dd>
+              <div className="flex flex-col gap-1">
+                <dt className="text-[0.65rem] uppercase tracking-[0.25em] text-slate-400">Change</dt>
+                <dd className="text-sm text-slate-200">
+                  {formatValue(alert.delta, metricUnits[alert.metric])}
+                </dd>
               </div>
             )}
           </dl>
         </div>
-        <div className="alert-item__actions">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
           {onFocusSensor && (
-            <button
-              type="button"
-              className="alert-item__button"
-              onClick={() => onFocusSensor(alert.sensorId)}
-            >
+            <button type="button" className={buttonBaseClass} onClick={() => onFocusSensor(alert.sensorId)}>
               <MapPin size={14} aria-hidden />
               View sensor
             </button>
           )}
           {!alert.acknowledged && (
-            <button
-              type="button"
-              className="alert-item__button"
-              onClick={() => onAcknowledge(alert.id)}
-            >
+            <button type="button" className={buttonBaseClass} onClick={() => onAcknowledge(alert.id)}>
               <CheckCircle2 size={14} aria-hidden />
               Acknowledge
             </button>
           )}
           {!alert.resolvedAt && (
-            <button
-              type="button"
-              className="alert-item__button alert-item__button--primary"
-              onClick={() => onResolve(alert.id)}
-            >
+            <button type="button" className={primaryButtonClass} onClick={() => onResolve(alert.id)}>
               <Clock3 size={14} aria-hidden />
               Mark resolved
             </button>
           )}
           {alert.acknowledged && (
-            <span className="alert-item__acknowledged">
+            <span className="rounded-full bg-slate-800/60 px-3 py-1 text-xs uppercase tracking-widest text-slate-300">
               Acknowledged
-              {alert.acknowledgedAt
-                ? ` ${formatSince(alert.acknowledgedAt)}`
-                : ''}
+              {alert.acknowledgedAt ? ` ${formatSince(alert.acknowledgedAt)}` : ''}
             </span>
           )}
           {alert.resolvedAt && (
-            <span className="alert-item__resolved">
+            <span className="rounded-full bg-emerald-600/20 px-3 py-1 text-xs uppercase tracking-widest text-emerald-200">
               Resolved {formatSince(alert.resolvedAt)}
             </span>
           )}
@@ -214,24 +218,27 @@ export const AlertCenter = ({
   }, [alerts])
 
   return (
-    <div ref={rootRef} className="panel alert-center">
-      <div className="panel__header alert-center__header">
-        <div>
-          <h2 className="panel__title">
+    <div ref={rootRef} className={`${panelClass} max-h-[28rem] overflow-hidden`}>
+      <div className={`${panelHeaderClass} flex-col gap-3 lg:flex-row lg:items-start lg:justify-between`}>
+        <div className="space-y-2">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-100">
             <BellRing size={18} aria-hidden />
             Leak alerts
           </h2>
-          <p className="panel__subtext">
+          <p className="text-sm text-slate-400">
             Monitoring anomalies reported by the detection service.
           </p>
         </div>
-        <div className="alert-center__toolbar">
-          <span className="alert-center__badge" data-active={activeAlerts.length > 0}>
+        <div className="flex flex-wrap items-center gap-3">
+          <span
+            className={`${badgeBaseClass} border border-slate-600/60 bg-slate-800/60 text-slate-300`}
+            data-active={activeAlerts.length > 0}
+          >
             {activeAlerts.length} active
           </span>
           <button
             type="button"
-            className="alert-center__refresh"
+            className={buttonBaseClass}
             onClick={onRefresh}
             aria-label="Refresh alerts"
           >
@@ -240,15 +247,11 @@ export const AlertCenter = ({
           </button>
         </div>
       </div>
-      <div className="panel__body alert-center__body">
+  <div className={`${panelBodyClass} flex-1 overflow-y-auto pr-2`}>
         {isLoading ? (
-          <div className="panel__body--empty">
-            <p>Loading leak alerts…</p>
-          </div>
+          <div className={emptyStateClass}>Loading leak alerts…</div>
         ) : showEmptyState ? (
-          <div className="panel__body--empty">
-            <p>No active leak alerts. All clear for now.</p>
-          </div>
+          <div className={emptyStateClass}>No active leak alerts. All clear for now.</div>
         ) : (
           <AlertList
             items={activeAlerts.length > 0 ? activeAlerts : recentResolved}
@@ -258,8 +261,8 @@ export const AlertCenter = ({
           />
         )}
         {activeAlerts.length > 0 && recentResolved.length > 0 && (
-          <div className="alert-center__resolved">
-            <h3>Recently resolved</h3>
+          <div className="mt-6 flex flex-col gap-3 border-t border-slate-700/40 pt-4">
+            <h3 className="text-sm font-semibold text-slate-300">Recently resolved</h3>
             <AlertList
               items={recentResolved}
               onAcknowledge={onAcknowledge}

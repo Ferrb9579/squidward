@@ -1,3 +1,9 @@
+import {
+  emptyStateClass,
+  panelBodyClass,
+  panelClass,
+  panelHeaderClass
+} from '../styles/ui'
 import type { LiveEvent } from '../types'
 
 interface LiveFeedProps {
@@ -32,25 +38,28 @@ export const LiveFeed = ({ events, limit = 12 }: LiveFeedProps) => {
   const items = events.slice(0, limit)
 
   return (
-    <div className="panel live-feed">
-      <div className="panel__header">
-        <h2>Live feed</h2>
-        <p className="panel__subtext">Streaming updates from IoT simulator.</p>
+    <div className={`${panelClass} max-h-[22rem]`}>
+      <div className={panelHeaderClass}>
+        <h2 className="text-lg font-semibold text-slate-100">Live feed</h2>
+        <p className="text-sm text-slate-400">Streaming updates from IoT simulator.</p>
       </div>
-      <div className="panel__body live-feed__body">
+      <div className={`${panelBodyClass} overflow-y-auto`}>
         {items.length === 0 ? (
-          <p className="panel__empty">Waiting for live sensor activity.</p>
+          <p className={emptyStateClass}>Waiting for live sensor activity.</p>
         ) : (
-          <ul className="live-feed__list">
+          <ul className="flex flex-col gap-3">
             {items.map((event) => (
-              <li key={`${event.sensor.id}-${event.reading.timestamp.getTime()}`}>
-                <div className="live-feed__meta">
-                  <span className="live-feed__sensor">{event.sensor.name}</span>
-                  <span className="live-feed__time">
-                    {timeFormatter.format(event.reading.timestamp)}
+              <li
+                key={`${event.sensor.id}-${event.reading.timestamp.getTime()}`}
+                className="rounded-lg border border-slate-700/40 bg-slate-900/50 p-3"
+              >
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span className="text-sm font-semibold text-slate-200">
+                    {event.sensor.name}
                   </span>
+                  <span>{timeFormatter.format(event.reading.timestamp)}</span>
                 </div>
-                <p className="live-feed__description">{describeReading(event)}</p>
+                <p className="mt-2 text-sm text-slate-300">{describeReading(event)}</p>
               </li>
             ))}
           </ul>
