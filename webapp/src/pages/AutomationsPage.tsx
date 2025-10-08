@@ -221,6 +221,7 @@ const AutomationsPage = () => {
   const [editingAutomation, setEditingAutomation] = useState<SensorAutomation | null>(null)
   const [formError, setFormError] = useState<string | undefined>(undefined)
   const [localSaving, setLocalSaving] = useState(false)
+  const [sensorSearch, setSensorSearch] = useState('')
 
   useEffect(() => {
     void initialize()
@@ -236,6 +237,14 @@ const AutomationsPage = () => {
     () => sensors.find((sensor) => sensor.id === selectedSensorId),
     [sensors, selectedSensorId]
   )
+
+  const filteredSensors = useMemo(() => {
+    const query = sensorSearch.trim().toLowerCase()
+    if (!query) return sensors
+    return sensors.filter((sensor) =>
+      `${sensor.name} ${sensor.zone.name} ${sensor.kind}`.toLowerCase().includes(query)
+    )
+  }, [sensorSearch, sensors])
 
   const handleSelectSensor = (sensorId: string) => {
     clearError()
@@ -438,48 +447,8 @@ const AutomationsPage = () => {
           </div>
         ) : null}
       </div>
-
-      <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
-        <aside className="flex flex-col gap-4">
-          <div className={`${panelClass} overflow-hidden`}>
-            <div className={`${panelHeaderClass} border-b border-slate-800/60`}>Sensors</div>
-            <div className={`${panelBodyClass} gap-3`}>
-              {loadingSensors ? (
-                <p className="text-sm text-slate-400">Loading sensors…</p>
-              ) : sensors.length === 0 ? (
-                <div className={emptyStateClass}>
-                  <p>No sensors found. Create a sensor first to attach automations.</p>
-                </div>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {sensors.map((sensor) => {
-                    const isSelected = sensor.id === selectedSensorId
-                    return (
-                      <li key={sensor.id}>
-                        <button
-                          type="button"
-                          onClick={() => handleSelectSensor(sensor.id)}
-                          className={`${
-                            isSelected
-                              ? 'border-sky-400/70 bg-sky-500/10 text-slate-100'
-                              : 'border-slate-800/70 text-slate-300 hover:border-sky-400/40 hover:text-slate-100'
-                          } flex w-full flex-col gap-1 rounded-lg border px-3 py-2 text-left transition`}
-                        >
-                          <span className="text-sm font-semibold">{sensor.name}</span>
-                          <span className="text-xs text-slate-400">
-                            {sensor.zone.name} • {sensor.kind.toUpperCase()}
-                          </span>
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </div>
-          </div>
-        </aside>
-
-        <section className="flex flex-col gap-6">
+      <div className="grid gap-6 lg:grid-cols-[1fr,260px]">
+        <section className="order-1 flex flex-col gap-6 lg:order-none">
           <div className={`${panelClass} overflow-hidden`}>
             <div className={`${panelHeaderClass} border-b border-slate-800/60`}>Automations</div>
             <div className={`${panelBodyClass} gap-4`}>
@@ -534,6 +503,62 @@ const AutomationsPage = () => {
             </div>
           )}
         </section>
+        <aside className="order-2 lg:order-none">
+          <div className={`${panelClass} overflow-hidden`}>
+            <div className={`${panelHeaderClass} gap-3 border-b border-slate-800/60`}>
+              <div>
+                <h3 className="text-base font-semibold text-slate-100">Sensors</h3>
+                <p className="text-xs text-slate-400">Pick a sensor to manage its automations.</p>
+              </div>
+              <input
+                type="search"
+                value={sensorSearch}
+                onChange={(event) => setSensorSearch(event.target.value)}
+                placeholder="Search sensors"
+                className="w-full rounded-lg border border-slate-700/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:border-sky-400/60 focus:outline-none focus:ring-0"
+              />
+            </div>
+            <div className={`${panelBodyClass} gap-3`}>
+              {loadingSensors ? (
+                <p className="text-sm text-slate-400">Loading sensors…</p>
+              ) : sensors.length === 0 ? (
+                <div className={emptyStateClass}>
+                  <p>No sensors found. Create a sensor first to attach automations.</p>
+                </div>
+              ) : (
+                <div className="max-h-[22rem] space-y-2 overflow-y-auto pr-1">
+                  {filteredSensors.length === 0 ? (
+                    <p className="px-1 text-xs text-slate-500">No sensors match your search.</p>
+                  ) : (
+                    <ul className="flex flex-col gap-2">
+                      {filteredSensors.map((sensor) => {
+                        const isSelected = sensor.id === selectedSensorId
+                        return (
+                          <li key={sensor.id}>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectSensor(sensor.id)}
+                              className={`${
+                                isSelected
+                                  ? 'border-sky-400/70 bg-sky-500/10 text-slate-100'
+                                  : 'border-slate-800/70 text-slate-300 hover:border-sky-400/40 hover:text-slate-100'
+                              } flex w-full flex-col gap-1 rounded-lg border px-3 py-2 text-left transition`}
+                            >
+                              <span className="text-sm font-semibold">{sensor.name}</span>
+                              <span className="text-xs text-slate-400">
+                                {sensor.zone.name} • {sensor.kind.toUpperCase()}
+                              </span>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   )
