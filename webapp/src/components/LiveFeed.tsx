@@ -31,6 +31,15 @@ const describeReading = (event: LiveEvent) => {
   if (reading.levelPercent !== undefined) {
     return `${reading.levelPercent.toFixed(1)}% level`
   }
+  if (reading.ph !== undefined) {
+    return `pH ${reading.ph.toFixed(2)}`
+  }
+  if (reading.turbidityDust !== undefined) {
+    return `${reading.turbidityDust.toFixed(2)} NTU`
+  }
+  if (reading.chlorinePpm !== undefined) {
+    return `${reading.chlorinePpm.toFixed(2)} ppm`
+  }
   return 'Sensor heartbeat'
 }
 

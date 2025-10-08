@@ -11,6 +11,7 @@ app.use((req, res, next) => {
         console.log('Body:', req.body)
     }
     res.send()
+    console.log("\n\n\n")
     next()
 })
 

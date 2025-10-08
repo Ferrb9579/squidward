@@ -25,7 +25,10 @@ const lastValuesSchema = new Schema(
     temperatureCelsius: Number,
     batteryPercent: Number,
     leakDetected: Boolean,
-    healthScore: Number
+    healthScore: Number,
+    ph: Number,
+    turbidityDust: Number,
+    chlorinePpm: Number
   },
   { _id: false }
 )

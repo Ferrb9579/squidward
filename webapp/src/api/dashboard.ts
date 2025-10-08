@@ -42,6 +42,9 @@ interface MeasurementDto {
   batteryPercent?: number | null
   leakDetected?: boolean | null
   healthScore?: number | null
+  ph?: number | null
+  turbidityDust?: number | null
+  chlorinePpm?: number | null
   createdAt?: string
   updatedAt?: string
 }
@@ -127,6 +130,9 @@ const parseMeasurement = (dto: MeasurementDto): Measurement => ({
   batteryPercent: dto.batteryPercent ?? undefined,
   leakDetected: dto.leakDetected ?? undefined,
   healthScore: dto.healthScore ?? undefined,
+  ph: dto.ph ?? undefined,
+  turbidityDust: dto.turbidityDust ?? undefined,
+  chlorinePpm: dto.chlorinePpm ?? undefined,
   createdAt: dto.createdAt ? new Date(dto.createdAt) : undefined,
   updatedAt: dto.updatedAt ? new Date(dto.updatedAt) : undefined
 })

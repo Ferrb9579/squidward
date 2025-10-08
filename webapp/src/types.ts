@@ -36,6 +36,9 @@ export interface Measurement {
   batteryPercent?: number
   leakDetected?: boolean
   healthScore?: number
+  ph?: number
+  turbidityDust?: number
+  chlorinePpm?: number
   createdAt?: Date
   updatedAt?: Date
 }
@@ -163,6 +166,9 @@ export type AutomationMetric =
   | 'temperatureCelsius'
   | 'batteryPercent'
   | 'healthScore'
+  | 'ph'
+  | 'turbidityDust'
+  | 'chlorinePpm'
   | 'leakDetected'
 
 export type AutomationComparison = 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'neq'

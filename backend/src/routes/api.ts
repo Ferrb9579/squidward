@@ -58,6 +58,9 @@ const automationMetrics: AutomationMetric[] = [
   'temperatureCelsius',
   'batteryPercent',
   'healthScore',
+  'ph',
+  'turbidityDust',
+  'chlorinePpm',
   'leakDetected'
 ]
 

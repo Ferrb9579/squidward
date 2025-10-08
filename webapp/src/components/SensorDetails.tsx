@@ -26,7 +26,10 @@ const metricLabels: Record<string, string> = {
   levelPercent: 'Level (%)',
   temperatureCelsius: 'Temperature (°C)',
   batteryPercent: 'Battery (%)',
-  healthScore: 'Health score'
+  healthScore: 'Health score',
+  ph: 'pH level',
+  turbidityDust: 'Turbidity (NTU)',
+  chlorinePpm: 'Chlorine (ppm)'
 }
 
 const renderMetricValue = (value: number | boolean | undefined) => {
@@ -59,6 +62,9 @@ export const SensorDetails = ({ sensor, measurements }: SensorDetailsProps) => {
       latest?.temperatureCelsius ?? sensor.lastValues?.temperatureCelsius,
     batteryPercent: latest?.batteryPercent ?? sensor.lastValues?.batteryPercent,
     healthScore: latest?.healthScore ?? sensor.lastValues?.healthScore,
+    ph: latest?.ph ?? sensor.lastValues?.ph,
+    turbidityDust: latest?.turbidityDust ?? sensor.lastValues?.turbidityDust,
+    chlorinePpm: latest?.chlorinePpm ?? sensor.lastValues?.chlorinePpm,
     leakDetected: latest?.leakDetected ?? sensor.lastValues?.leakDetected
   })
 
@@ -134,8 +140,18 @@ export const SensorDetails = ({ sensor, measurements }: SensorDetailsProps) => {
                     {entry.levelPercent !== undefined && (
                       <span>{entry.levelPercent.toFixed(1)}%</span>
                     )}
+                    {entry.temperatureCelsius !== undefined && (
+                      <span>{entry.temperatureCelsius.toFixed(1)} °C</span>
+                    )}
                     {entry.healthScore !== undefined && (
                       <span>Health {entry.healthScore}</span>
+                    )}
+                    {entry.ph !== undefined && <span>pH {entry.ph.toFixed(2)}</span>}
+                    {entry.turbidityDust !== undefined && (
+                      <span>{entry.turbidityDust.toFixed(2)} NTU</span>
+                    )}
+                    {entry.chlorinePpm !== undefined && (
+                      <span>{entry.chlorinePpm.toFixed(2)} ppm</span>
                     )}
                     {entry.leakDetected && (
                       <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-widest text-orange-200">

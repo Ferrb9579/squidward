@@ -37,7 +37,10 @@ const numericMetrics: AutomationMetric[] = [
   'levelPercent',
   'temperatureCelsius',
   'batteryPercent',
-  'healthScore'
+  'healthScore',
+  'ph',
+  'turbidityDust',
+  'chlorinePpm'
 ]
 
 const booleanMetrics: AutomationMetric[] = ['leakDetected']

@@ -161,6 +161,9 @@ export interface IngestSensorReadingInput {
   batteryPercent?: number
   leakDetected?: boolean
   healthScore?: number
+  ph?: number
+  turbidityDust?: number
+  chlorinePpm?: number
 }
 
 export const ingestSensorReading = async (
@@ -191,7 +194,10 @@ export const ingestSensorReading = async (
               Math.round(input.batteryPercent - (input.leakDetected ? 35 : 0))
             )
           )
-        : undefined)
+        : undefined),
+    ph: input.ph,
+    turbidityDust: input.turbidityDust,
+    chlorinePpm: input.chlorinePpm
   }
 
   await MeasurementModel.create(measurementPayload)
@@ -204,7 +210,10 @@ export const ingestSensorReading = async (
     temperatureCelsius: input.temperatureCelsius,
     batteryPercent: input.batteryPercent,
     leakDetected: input.leakDetected,
-    healthScore: measurementPayload.healthScore
+    healthScore: measurementPayload.healthScore,
+    ph: input.ph,
+    turbidityDust: input.turbidityDust,
+    chlorinePpm: input.chlorinePpm
   })
   sensorDoc.isActive = true
 
@@ -221,7 +230,10 @@ export const ingestSensorReading = async (
     temperatureCelsius: measurementPayload.temperatureCelsius ?? undefined,
     batteryPercent: measurementPayload.batteryPercent ?? undefined,
     leakDetected: measurementPayload.leakDetected ?? undefined,
-    healthScore: measurementPayload.healthScore ?? undefined
+    healthScore: measurementPayload.healthScore ?? undefined,
+    ph: measurementPayload.ph ?? undefined,
+    turbidityDust: measurementPayload.turbidityDust ?? undefined,
+    chlorinePpm: measurementPayload.chlorinePpm ?? undefined
   }
 
   emitSensorReading({ sensor: sensorState, reading })
@@ -269,6 +281,9 @@ export const getRecentMeasurementsForSensor = async (
     batteryPercent: doc.batteryPercent ?? undefined,
     leakDetected: doc.leakDetected ?? undefined,
     healthScore: doc.healthScore ?? undefined,
+    ph: doc.ph ?? undefined,
+    turbidityDust: doc.turbidityDust ?? undefined,
+    chlorinePpm: doc.chlorinePpm ?? undefined,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt
   }))

@@ -304,7 +304,10 @@ class IotSimulator extends EventEmitter {
       temperatureCelsius: reading.temperatureCelsius,
       batteryPercent: reading.batteryPercent,
       leakDetected: reading.leakDetected,
-      healthScore: reading.healthScore
+      healthScore: reading.healthScore,
+      ph: reading.ph,
+      turbidityDust: reading.turbidityDust,
+      chlorinePpm: reading.chlorinePpm
     })
 
     this.sensors[index] = updatedSensor
@@ -318,11 +321,17 @@ class IotSimulator extends EventEmitter {
   private generateReading(sensor: SensorState, timestamp: Date): SensorReading {
     const baseBattery = sensor.lastValues?.batteryPercent ?? baseBatteryDrain()
     const leakTrigger = Math.random() < 0.03
+    const basePh = sensor.lastValues?.ph ?? 7.3
+    const baseTurbidity = sensor.lastValues?.turbidityDust ?? (sensor.kind === 'level' ? 2.5 : 1.4)
+    const baseChlorine = sensor.lastValues?.chlorinePpm ?? 1.6
 
     const reading: SensorReading = {
       sensorId: sensor.id,
       timestamp,
-      batteryPercent: clamp(jitter(baseBattery, 1.5), 65, 100)
+      batteryPercent: clamp(jitter(baseBattery, 1.5), 65, 100),
+      ph: clamp(jitter(basePh, 0.12), 6.4, 8.4),
+      turbidityDust: clamp(jitter(baseTurbidity, 0.6), 0.3, 8),
+      chlorinePpm: clamp(jitter(baseChlorine, 0.18), 0.1, 3.2)
     }
 
     switch (sensor.kind) {

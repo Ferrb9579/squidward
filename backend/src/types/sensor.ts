@@ -31,6 +31,9 @@ export interface SensorReading {
   batteryPercent?: number
   leakDetected?: boolean
   healthScore?: number
+  ph?: number
+  turbidityDust?: number
+  chlorinePpm?: number
 }
 
 export interface SensorState extends SensorMetadata {

@@ -26,6 +26,9 @@ type MetricKey =
   | 'temperatureCelsius'
   | 'batteryPercent'
   | 'healthScore'
+  | 'ph'
+  | 'turbidityDust'
+  | 'chlorinePpm'
   | 'leakDetected'
 
 const metricOrder: MetricKey[] = [
@@ -35,6 +38,9 @@ const metricOrder: MetricKey[] = [
   'temperatureCelsius',
   'batteryPercent',
   'healthScore',
+  'ph',
+  'turbidityDust',
+  'chlorinePpm',
   'leakDetected'
 ]
 
@@ -45,6 +51,9 @@ const metricLabel: Record<MetricKey, string> = {
   temperatureCelsius: 'Temperature',
   batteryPercent: 'Battery',
   healthScore: 'Health score',
+  ph: 'pH',
+  turbidityDust: 'Turbidity',
+  chlorinePpm: 'Chlorine',
   leakDetected: 'Leak'
 }
 
@@ -63,6 +72,12 @@ const formatMetricValue = (key: MetricKey, value: number | boolean) => {
       return `${Number(value).toFixed(0)}%`
     case 'healthScore':
       return Number(value).toFixed(0)
+    case 'ph':
+      return Number(value).toFixed(2)
+    case 'turbidityDust':
+      return `${Number(value).toFixed(2)} NTU`
+    case 'chlorinePpm':
+      return `${Number(value).toFixed(2)} ppm`
     case 'leakDetected':
       return value ? 'Detected' : 'Clear'
     default:

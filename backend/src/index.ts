@@ -84,7 +84,10 @@ app.post('/sensor/:sensorId', async (req, res) => {
 			temperatureCelsius: parseNumberField(req.body?.temperatureCelsius),
 			batteryPercent: parseNumberField(req.body?.batteryPercent),
 			leakDetected: parseBooleanField(req.body?.leakDetected),
-			healthScore: parseNumberField(req.body?.healthScore)
+			healthScore: parseNumberField(req.body?.healthScore),
+			ph: parseNumberField(req.body?.ph),
+			turbidityDust: parseNumberField(req.body?.turbidityDust),
+			chlorinePpm: parseNumberField(req.body?.chlorinePpm)
 		})
 
 		res.status(202).json({ sensor })

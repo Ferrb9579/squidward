@@ -10,7 +10,10 @@ const measurementSchema = new Schema(
     temperatureCelsius: Number,
     batteryPercent: Number,
     leakDetected: Boolean,
-    healthScore: Number
+    healthScore: Number,
+    ph: Number,
+    turbidityDust: Number,
+    chlorinePpm: Number
   },
   {
     timestamps: true,

@@ -36,6 +36,9 @@ const metricOptions: Array<{ value: AutomationMetric; label: string; isBoolean: 
   { value: 'temperatureCelsius', label: 'Temperature (°C)', isBoolean: false },
   { value: 'batteryPercent', label: 'Battery (%)', isBoolean: false },
   { value: 'healthScore', label: 'Health score', isBoolean: false },
+  { value: 'ph', label: 'pH level', isBoolean: false },
+  { value: 'turbidityDust', label: 'Turbidity (dust)', isBoolean: false },
+  { value: 'chlorinePpm', label: 'Chlorine (ppm)', isBoolean: false },
   { value: 'leakDetected', label: 'Leak detected state', isBoolean: true }
 ]
 
