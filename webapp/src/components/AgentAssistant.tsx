@@ -21,7 +21,10 @@ const createMessage = (role: Message['role'], text: string): Message => ({
 const AgentAssistant = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
-    createMessage('assistant', 'Hi! I can help you navigate the console—try asking me to open the create sensor page or show a sensor.')
+    createMessage(
+      'assistant',
+      'Hi! I can help you navigate the console—ask me to open the automations page, start a new automation, or pull up a specific sensor.'
+    )
   ])
   const [input, setInput] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -143,7 +146,7 @@ const AgentAssistant = () => {
               value={input}
               onChange={(event) => setInput(event.target.value)}
               className="flex-1 rounded-lg border border-slate-700/60 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-sky-400/70 focus:outline-none"
-              placeholder="Ask to navigate or find a sensor"
+              placeholder="Ask to navigate, create automations, or find a sensor"
               disabled={isSending}
             />
             <button

@@ -40,6 +40,8 @@ const api = Router()
 const agentRoutes = [
   { path: '/', description: 'Operations dashboard overview with analytics and alerts' },
   { path: '/sensors/new', description: 'Create a new IoT sensor with map placement' },
+  { path: '/automations', description: 'Manage automation rules for each sensor' },
+  { path: '/automations?create=true', description: 'Open the automation form to create a new rule' },
   { path: '/api-keys', description: 'Manage ingestion API keys' }
 ] as const
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Trash2, Plus, RefreshCcw, Edit2, Power } from 'lucide-react'
 import {
   buttonBaseClass,
@@ -222,10 +223,21 @@ const AutomationsPage = () => {
   const [formError, setFormError] = useState<string | undefined>(undefined)
   const [localSaving, setLocalSaving] = useState(false)
   const [sensorSearch, setSensorSearch] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const wantsCreateForm = searchParams.get('create') === 'true'
 
   useEffect(() => {
     void initialize()
   }, [initialize])
+
+  useEffect(() => {
+    if (wantsCreateForm) {
+      setEditingAutomation(null)
+      setShowCreateForm(true)
+    } else if (!editingAutomation) {
+      setShowCreateForm(false)
+    }
+  }, [wantsCreateForm, editingAutomation])
 
   useEffect(() => {
     if (!showCreateForm && !editingAutomation) {
@@ -253,6 +265,16 @@ const AutomationsPage = () => {
     selectSensor(sensorId)
   }
 
+  const setCreateParam = (value: boolean) => {
+    const next = new URLSearchParams(searchParams)
+    if (value) {
+      next.set('create', 'true')
+    } else {
+      next.delete('create')
+    }
+    setSearchParams(next, { replace: true })
+  }
+
   const handleRefresh = () => {
     clearError()
     void refreshAutomations()
@@ -267,6 +289,7 @@ const AutomationsPage = () => {
     clearError()
     setEditingAutomation(null)
     setShowCreateForm(true)
+    setCreateParam(true)
   }
 
   const handleCancelForm = () => {
@@ -274,6 +297,7 @@ const AutomationsPage = () => {
     setEditingAutomation(null)
     setFormError(undefined)
     clearError()
+    setCreateParam(false)
   }
 
   const convertCreatePayload = (values: AutomationFormValues) => {
@@ -336,6 +360,7 @@ const AutomationsPage = () => {
       if (created) {
         setShowCreateForm(false)
         setFormError(undefined)
+        setCreateParam(false)
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -357,6 +382,7 @@ const AutomationsPage = () => {
       if (updated) {
         setEditingAutomation(null)
         setFormError(undefined)
+        setCreateParam(false)
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -373,6 +399,7 @@ const AutomationsPage = () => {
     clearError()
     setShowCreateForm(false)
     setEditingAutomation(automation)
+    setCreateParam(false)
   }
 
   const handleDelete = (automation: SensorAutomation) => {
