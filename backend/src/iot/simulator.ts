@@ -1,13 +1,13 @@
 import { EventEmitter } from 'node:events'
 
 import { env } from '../config/env'
-import { MeasurementModel } from '../models/measurement'
 import { SensorModel } from '../models/sensor'
 import type {
   SensorMetadata,
   SensorReading,
   SensorState
 } from '../types/sensor'
+import { ingestSensorReading } from '../services/sensorService'
 
 const seedSensors: SensorMetadata[] = [
   {
@@ -295,26 +295,17 @@ class IotSimulator extends EventEmitter {
   ) {
     const reading = this.generateReading(sensor, timestamp)
 
-    await MeasurementModel.create({ ...reading })
-
-    const { sensorId: _sensorId, timestamp: _timestamp, ...latestValues } = reading
-
-    await SensorModel.updateOne(
-      { _id: sensor.id },
-      {
-        $set: {
-          lastReadingAt: timestamp,
-          lastValues: latestValues
-        }
-      }
-    ).exec()
-
-    const updatedSensor: SensorState = {
-      ...sensor,
-      lastReadingAt: timestamp,
-      lastValues: latestValues,
-      updatedAt: timestamp
-    }
+    const updatedSensor = await ingestSensorReading({
+      sensorId: sensor.id,
+      timestamp: reading.timestamp,
+      flowRateLpm: reading.flowRateLpm,
+      pressureBar: reading.pressureBar,
+      levelPercent: reading.levelPercent,
+      temperatureCelsius: reading.temperatureCelsius,
+      batteryPercent: reading.batteryPercent,
+      leakDetected: reading.leakDetected,
+      healthScore: reading.healthScore
+    })
 
     this.sensors[index] = updatedSensor
 

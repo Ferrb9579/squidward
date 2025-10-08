@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express'
 import { simulator } from '../iot/simulator'
-import type { ReadingEventPayload } from '../iot/simulator'
+import { sensorEvents } from '../events/sensorEvents'
+import type { SensorReadingEvent } from '../events/sensorEvents'
 import {
   leakDetectionEvents,
   normalizeAlertPayload
@@ -63,12 +64,12 @@ export const establishSseConnection = (req: Request, res: Response) => {
   req.on('error', cleanup)
 }
 
-const includeReading = ({ sensor, reading }: ReadingEventPayload) => ({
+const includeReading = ({ sensor, reading }: SensorReadingEvent) => ({
   sensor,
   reading
 })
 
-simulator.on('reading', (payload) => {
+sensorEvents.on('reading', (payload) => {
   broadcast('reading', includeReading(payload))
 })
 

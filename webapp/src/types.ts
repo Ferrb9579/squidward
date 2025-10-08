@@ -155,3 +155,38 @@ export interface AgentResponse {
   reply: string
   actions: AgentAction[]
 }
+
+export type AutomationMetric =
+  | 'flowRateLpm'
+  | 'pressureBar'
+  | 'levelPercent'
+  | 'temperatureCelsius'
+  | 'batteryPercent'
+  | 'healthScore'
+  | 'leakDetected'
+
+export type AutomationComparison = 'lt' | 'lte' | 'gt' | 'gte' | 'eq' | 'neq'
+
+export type AutomationHttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+
+export interface SensorAutomation {
+  id: string
+  name: string
+  description?: string
+  sourceSensorId: string
+  targetSensorId?: string
+  metric: AutomationMetric
+  comparison: AutomationComparison
+  threshold: number | boolean
+  action?: string
+  targetMethod: AutomationHttpMethod
+  targetUrl: string
+  payloadTemplate?: Record<string, unknown> | null
+  headers?: Record<string, string>
+  timeoutMs: number
+  cooldownSeconds: number
+  enabled: boolean
+  lastTriggeredAt?: Date
+  createdAt?: Date
+  updatedAt?: Date
+}

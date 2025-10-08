@@ -2,6 +2,7 @@ import { NavLink, Route, Routes, Navigate } from 'react-router-dom'
 import DashboardPage from './pages/DashboardPage'
 import CreateSensorPage from './pages/CreateSensorPage'
 import ApiKeysPage from './pages/ApiKeysPage'
+import AutomationsPage from './pages/AutomationsPage'
 import AgentAssistant from './components/AgentAssistant'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -28,6 +29,9 @@ function App() {
             <NavLink to="/sensors/new" className={navLinkClass}>
               Create sensor
             </NavLink>
+            <NavLink to="/automations" className={navLinkClass}>
+              Automations
+            </NavLink>
             <NavLink to="/api-keys" className={navLinkClass}>
               API keys
             </NavLink>
@@ -38,6 +42,7 @@ function App() {
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/sensors/new" element={<CreateSensorPage />} />
+          <Route path="/automations" element={<AutomationsPage />} />
           <Route path="/api-keys" element={<ApiKeysPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

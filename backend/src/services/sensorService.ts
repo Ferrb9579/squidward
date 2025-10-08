@@ -5,9 +5,11 @@ import {
   SensorModel,
   SensorSchemaType
 } from '../models/sensor'
-import type { SensorState } from '../types/sensor'
+import type { SensorState, SensorReading } from '../types/sensor'
 import type { SensorKind, SensorLocation, SensorZone } from '../types/sensor'
 import { leakDetectionEvents } from './leakDetectionService'
+import { emitSensorReading } from '../events/sensorEvents'
+import { evaluateAutomationsForReading } from './sensorAutomationService'
 
 type SensorLean = SensorSchemaType & {
   createdAt?: Date
@@ -209,7 +211,29 @@ export const ingestSensorReading = async (
   await sensorDoc.save()
   await resolveOfflineAlertsForSensor(sensorDoc.id, sensorDoc.name, timestamp)
 
-  return mapSensorDocToState(sensorDoc.toObject())
+  const sensorState = mapSensorDocToState(sensorDoc.toObject())
+  const reading: SensorReading = {
+    sensorId: measurementPayload.sensorId,
+    timestamp: measurementPayload.timestamp,
+    flowRateLpm: measurementPayload.flowRateLpm ?? undefined,
+    pressureBar: measurementPayload.pressureBar ?? undefined,
+    levelPercent: measurementPayload.levelPercent ?? undefined,
+    temperatureCelsius: measurementPayload.temperatureCelsius ?? undefined,
+    batteryPercent: measurementPayload.batteryPercent ?? undefined,
+    leakDetected: measurementPayload.leakDetected ?? undefined,
+    healthScore: measurementPayload.healthScore ?? undefined
+  }
+
+  emitSensorReading({ sensor: sensorState, reading })
+
+  void evaluateAutomationsForReading(sensorState, reading).catch((error) => {
+    console.error('Automation evaluation failed', {
+      sensorId: sensorState.id,
+      error
+    })
+  })
+
+  return sensorState
 }
 
 export interface MeasurementQueryOptions {
