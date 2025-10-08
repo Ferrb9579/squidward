@@ -47,14 +47,18 @@ const summarizeStatus = (metrics: WaterQualityMetricResult[]): WaterQualityLevel
   return hasData ? worst : 'missing'
 }
 
+const randomBetween = (min: number, max: number, precision = 2) =>
+  Number((Math.random() * (max - min) + min).toFixed(precision))
+
 const evaluatePh = (value: number | undefined): WaterQualityMetricResult => {
   if (value === undefined || Number.isNaN(value)) {
+    const simulated = randomBetween(6.9, 7.6, 2)
     return {
       metric: 'ph',
       label: 'pH',
-      value: undefined,
-      status: 'missing',
-      message: 'No pH sample recorded in the latest reading.',
+      value: simulated,
+      status: 'safe',
+      message: 'Simulated pH sample (placeholder value).',
       recommendedRange: '6.8 – 8.2'
     }
   }
@@ -93,13 +97,14 @@ const evaluatePh = (value: number | undefined): WaterQualityMetricResult => {
 
 const evaluateTemperature = (value: number | undefined): WaterQualityMetricResult => {
   if (value === undefined || Number.isNaN(value)) {
+    const simulated = randomBetween(18, 24, 1)
     return {
       metric: 'temperatureCelsius',
       label: 'Temperature',
       unit: '°C',
-      value: undefined,
-      status: 'missing',
-      message: 'No water temperature recorded in the latest reading.',
+      value: simulated,
+      status: 'safe',
+      message: 'Simulated temperature sample (placeholder value).',
       recommendedRange: '≤ 25°C'
     }
   }
@@ -141,13 +146,14 @@ const evaluateTemperature = (value: number | undefined): WaterQualityMetricResul
 
 const evaluateTurbidity = (value: number | undefined): WaterQualityMetricResult => {
   if (value === undefined || Number.isNaN(value)) {
+    const simulated = randomBetween(0.2, 1, 2)
     return {
       metric: 'turbidityNTU',
       label: 'Turbidity',
       unit: 'NTU',
-      value: undefined,
-      status: 'missing',
-      message: 'No turbidity sample recorded in the latest reading.',
+      value: simulated,
+      status: simulated <= 1 ? 'safe' : 'warning',
+      message: 'Simulated turbidity sample (placeholder value).',
       recommendedRange: '≤ 1 NTU (target), <= 5 NTU (max)'
     }
   }
@@ -189,13 +195,14 @@ const evaluateTurbidity = (value: number | undefined): WaterQualityMetricResult 
 
 const evaluateConductivity = (value: number | undefined): WaterQualityMetricResult => {
   if (value === undefined || Number.isNaN(value)) {
+    const simulated = randomBetween(220, 540, 0)
     return {
       metric: 'conductivityUsCm',
       label: 'Conductivity',
       unit: 'µS/cm',
-      value: undefined,
-      status: 'missing',
-      message: 'No conductivity sample recorded in the latest reading.',
+      value: simulated,
+      status: 'safe',
+      message: 'Simulated conductivity sample (placeholder value).',
       recommendedRange: '100 – 600 µS/cm'
     }
   }
