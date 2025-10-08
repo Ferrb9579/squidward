@@ -1,17 +1,39 @@
 import { useMemo } from 'react'
+import {
+  CategoryScale,
+  Chart as ChartJS,
+  Filler,
+  Legend,
+  LineElement,
+  LinearScale,
+  PointElement,
+  TimeScale,
+  Tooltip,
+  type ChartData,
+  type ChartOptions,
+  type ScatterDataPoint,
+  type TooltipItem
+} from 'chart.js'
+import 'chartjs-adapter-date-fns'
+import { Line } from 'react-chartjs-2'
 import type { UsageAnalytics } from '../types'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend,
+  TimeScale
+)
 
 interface UsageAnalyticsPanelProps {
   analytics?: UsageAnalytics
   isLoading: boolean
   onRefresh: () => void
 }
-
-const formatHour = (date: Date) =>
-  date.toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
 
 const formatDateRange = (start?: Date, end?: Date) => {
   if (!start || !end) return '—'
@@ -35,29 +57,6 @@ const formatNumber = (value?: number, digits = 1) =>
     ? '—'
     : Number(value).toFixed(digits)
 
-const useFlowChartPoints = (analytics?: UsageAnalytics) => {
-  return useMemo(() => {
-    if (!analytics) return []
-    const flowPoints = analytics.hourly.filter(
-      (point) => point.avgFlowLpm !== undefined
-    )
-    if (flowPoints.length === 0) return []
-
-    const maxFlow = Math.max(...flowPoints.map((point) => point.avgFlowLpm ?? 0))
-    if (maxFlow <= 0) return []
-
-    const minTime = flowPoints[0]?.hour.getTime() ?? 0
-    const maxTime = flowPoints[flowPoints.length - 1]?.hour.getTime() ?? minTime
-    const span = Math.max(maxTime - minTime, 1)
-
-    return flowPoints.map((point) => {
-      const x = ((point.hour.getTime() - minTime) / span) * 100
-      const y = 100 - ((point.avgFlowLpm ?? 0) / maxFlow) * 90 - 5
-      return { x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) }
-    })
-  }, [analytics])
-}
-
 const relativeFormatter = new Intl.RelativeTimeFormat(undefined, {
   numeric: 'auto'
 })
@@ -75,7 +74,87 @@ export const UsageAnalyticsPanel = ({
   isLoading,
   onRefresh
 }: UsageAnalyticsPanelProps) => {
-  const chartPoints = useFlowChartPoints(analytics)
+  const flowChartData = useMemo<ChartData<'line', ScatterDataPoint[]> | null>(() => {
+    if (!analytics) return null
+    const points = analytics.hourly
+      .filter((point) => point.avgFlowLpm !== undefined)
+      .map((point) => ({
+        x: point.hour.getTime(),
+        y: point.avgFlowLpm as number
+      }))
+
+    if (points.length < 2) {
+      return null
+    }
+
+    return {
+      datasets: [
+        {
+          label: 'Average Flow',
+          data: points,
+          parsing: false,
+          tension: 0.35,
+          fill: 'origin',
+          borderColor: 'rgba(56, 189, 248, 0.8)',
+          backgroundColor: 'rgba(56, 189, 248, 0.18)',
+          pointRadius: 0,
+          pointHitRadius: 10,
+          borderWidth: 2
+        }
+      ]
+    }
+  }, [analytics])
+
+  const flowChartOptions = useMemo<ChartOptions<'line'>>(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'minute',
+            displayFormats: {
+              minute: 'HH:mm'
+            }
+          },
+          ticks: {
+            color: 'rgba(148, 163, 184, 0.85)'
+          },
+          grid: {
+            color: 'rgba(148, 163, 184, 0.15)'
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: 'rgba(148, 163, 184, 0.85)',
+            callback: (value: string | number) => `${value} L/min`
+          },
+          grid: {
+            color: 'rgba(148, 163, 184, 0.12)'
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          intersect: false,
+          mode: 'index',
+          callbacks: {
+            label: (context: TooltipItem<'line'>) =>
+              context.parsed.y !== undefined
+                ? `${context.parsed.y.toFixed(1)} L/min`
+                : '—'
+          }
+        }
+      }
+    }),
+    []
+  )
+
   const maxZoneFlow = useMemo(() => {
     if (!analytics || analytics.zoneFlow.length === 0) return 0
     return Math.max(...analytics.zoneFlow.map((zone) => zone.avgFlowLpm))
@@ -100,7 +179,7 @@ export const UsageAnalyticsPanel = ({
         <div>
           <h2>Usage analytics</h2>
           <p className="panel__subtext">
-            Flow, pressure, and reservoir insight over the last day.
+            Flow, pressure, and reservoir insight over the last few hours.
           </p>
         </div>
         <div className="usage-analytics__meta">
@@ -130,16 +209,9 @@ export const UsageAnalyticsPanel = ({
                   Latest avg: {formatNumber(latestFlow, 1)} L/min
                 </span>
               </header>
-              {chartPoints.length > 1 ? (
+              {flowChartData ? (
                 <div className="usage-analytics__chart">
-                  <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <polyline points={chartPoints.map((p) => `${p.x},${p.y}`).join(' ')} />
-                  </svg>
-                  <div className="usage-analytics__chart-axis">
-                    {analytics.hourly.slice(-6).map((point) => (
-                      <span key={point.hour.toISOString()}>{formatHour(point.hour)}</span>
-                    ))}
-                  </div>
+                  <Line data={flowChartData} options={flowChartOptions} />
                 </div>
               ) : (
                 <p className="usage-analytics__chart-empty">Not enough readings for a trend line.</p>

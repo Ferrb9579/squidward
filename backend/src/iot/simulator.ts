@@ -47,6 +47,64 @@ const seedSensors: SensorMetadata[] = [
     location: { latitude: 37.421443, longitude: -122.086297 },
     description: 'Multi-metric sensor for maintenance analytics',
     isActive: true
+  },
+  {
+    id: 'north-labs-secondary-flow',
+    name: 'North Labs Secondary Flow',
+    kind: 'flow',
+    zone: { id: 'north', name: 'North Tower' },
+    location: { latitude: 37.423612, longitude: -122.084512 },
+    installDepthMeters: 1,
+    description: 'Redundant feed for the laboratories wing',
+    isActive: true
+  },
+  {
+    id: 'central-atrium-pressure',
+    name: 'Central Atrium Pressure',
+    kind: 'pressure',
+    zone: { id: 'central', name: 'Central Reservoir' },
+    location: { latitude: 37.422381, longitude: -122.083154 },
+    installDepthMeters: 0.9,
+    description: 'Monitoring downstream atrium distribution pressure',
+    isActive: true
+  },
+  {
+    id: 'south-irrigation-level',
+    name: 'South Irrigation Level',
+    kind: 'level',
+    zone: { id: 'south', name: 'Maintenance Yard' },
+    location: { latitude: 37.420956, longitude: -122.085642 },
+    description: 'Reservoir level for irrigation staging tanks',
+    isActive: true
+  },
+  {
+    id: 'west-quad-flow',
+    name: 'West Quad Flow',
+    kind: 'flow',
+    zone: { id: 'west', name: 'West Quad' },
+    location: { latitude: 37.422765, longitude: -122.087148 },
+    installDepthMeters: 1.2,
+    description: 'Monitor supply to the west academic quad',
+    isActive: true
+  },
+  {
+    id: 'east-research-pressure',
+    name: 'East Research Pressure',
+    kind: 'pressure',
+    zone: { id: 'east', name: 'Research Annex' },
+    location: { latitude: 37.423982, longitude: -122.082374 },
+    installDepthMeters: 1,
+    description: 'Lab building loop pressure for research annex',
+    isActive: true
+  },
+  {
+    id: 'campus-green-composite',
+    name: 'Campus Green Composite',
+    kind: 'composite',
+    zone: { id: 'green', name: 'Campus Green' },
+    location: { latitude: 37.422415, longitude: -122.085931 },
+    description: 'Composite monitoring for central greenspace',
+    isActive: true
   }
 ]
 

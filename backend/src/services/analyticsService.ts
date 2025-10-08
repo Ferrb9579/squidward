@@ -38,7 +38,8 @@ export interface UsageAnalyticsSummary {
   lowReservoirs: ExtremeMeasurement[]
 }
 
-const HOURS_24 = 24 * 60 * 60 * 1000
+const DEFAULT_ANALYTICS_WINDOW_MS = 6 * 60 * 60 * 1000
+const FLOW_BUCKET_MINUTES = 10
 
 interface SensorLookup {
   id: string
@@ -63,7 +64,7 @@ export const getUsageAnalytics = async (
   options: { windowMs?: number } = {}
 ): Promise<UsageAnalyticsSummary> => {
   const now = new Date()
-  const windowMs = options.windowMs ?? HOURS_24
+  const windowMs = options.windowMs ?? DEFAULT_ANALYTICS_WINDOW_MS
   const since = new Date(now.getTime() - windowMs)
 
   const sensorMap = await mapSensors()
@@ -86,7 +87,8 @@ export const getUsageAnalytics = async (
             hour: {
               $dateTrunc: {
                 date: '$timestamp',
-                unit: 'hour'
+                unit: 'minute',
+                binSize: FLOW_BUCKET_MINUTES
               }
             }
           }

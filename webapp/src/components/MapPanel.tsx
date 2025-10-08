@@ -1,5 +1,5 @@
 import L from 'leaflet'
-import { useEffect } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import {
   MapContainer,
   Marker,
@@ -22,16 +22,34 @@ const kindColors: Record<SensorState['kind'], string> = {
   composite: '#a855f7'
 }
 
+const markerGlyphs: Record<SensorState['kind'], string> = {
+  flow: 'F',
+  pressure: 'P',
+  level: 'L',
+  composite: 'Σ'
+}
+
 const createSensorIcon = (sensor: SensorState, isSelected: boolean) => {
   const color = kindColors[sensor.kind] ?? '#38bdf8'
-  const className = `sensor-marker ${isSelected ? 'sensor-marker--selected' : ''}`
-  const size = isSelected ? 36 : 24
+  const glyph = markerGlyphs[sensor.kind] ?? 'S'
+  const width = isSelected ? 44 : 32
+  const height = Math.round(width * 1.35)
+  const className = `sensor-marker-icon${isSelected ? ' sensor-marker-icon--selected' : ''}`
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32" width="${width}" height="${height}" aria-hidden="true" focusable="false">
+      <path d="M12 1.8c-4.3 0-7.8 3.5-7.8 7.8 0 5.4 7.2 13.4 7.5 13.7a0.7 0.7 0 0 0 1 0c0.3-0.3 7.5-8.3 7.5-13.7 0-4.3-3.5-7.8-7.8-7.8Z" fill="${color}" stroke="rgba(15,23,42,0.85)" stroke-width="1.4" />
+      <circle cx="12" cy="11.2" r="5.4" fill="rgba(15, 23, 42, 0.82)" />
+      <text x="12" y="13.4" text-anchor="middle" font-family="'Inter',system-ui,-apple-system,'Segoe UI',sans-serif" font-size="7.5" font-weight="600" fill="#e2e8f0">${glyph}</text>
+      <ellipse cx="12" cy="28.5" rx="6" ry="2.2" fill="rgba(15, 23, 42, 0.28)" />
+    </svg>
+  `
 
   return L.divIcon({
-    html: `<span class="sensor-marker__dot" style="background:${color}"></span>`,
+    html: svg,
     className,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2]
+    iconSize: [width, height],
+    iconAnchor: [width / 2, height - 4],
+    popupAnchor: [0, -(height * 0.45)]
   })
 }
 
@@ -41,20 +59,51 @@ const RecenterOnSelection = ({
   sensor?: SensorState
 }) => {
   const map = useMap()
+  const lastSensorId = useRef<string | undefined>(undefined)
   useEffect(() => {
     if (!sensor) return
+    if (lastSensorId.current === sensor.id) {
+      return
+    }
+    lastSensorId.current = sensor.id
     const { latitude, longitude } = sensor.location
     map.flyTo([latitude, longitude], 18, { duration: 0.6 })
+    requestAnimationFrame(() => {
+      map.getContainer().blur()
+    })
   }, [sensor, map])
   return null
 }
 
 export const MapPanel = ({ sensors, selectedSensorId, onSelect }: MapPanelProps) => {
-  const fallbackSensor = sensors.find((sensor) => sensor.id === selectedSensorId)
-    ?? sensors.find((sensor) => sensor.isActive)
-    ?? sensors[0]
+  const selectedSensor = useMemo(
+    () => sensors.find((sensor) => sensor.id === selectedSensorId),
+    [sensors, selectedSensorId]
+  )
 
-  if (!fallbackSensor) {
+  const initialSensor = useMemo(
+    () => sensors.find((sensor) => sensor.isActive) ?? sensors[0],
+    [sensors]
+  )
+
+  const initialCenterRef = useRef<[number, number] | null>(null)
+
+  useEffect(() => {
+    if (!initialSensor) {
+      initialCenterRef.current = null
+    }
+  }, [initialSensor])
+
+  if (initialSensor && !initialCenterRef.current) {
+    initialCenterRef.current = [
+      initialSensor.location.latitude,
+      initialSensor.location.longitude
+    ]
+  }
+
+  const center = initialCenterRef.current
+
+  if (!initialSensor || !center) {
     return (
       <div className="panel map-panel">
         <div className="panel__header">
@@ -66,11 +115,6 @@ export const MapPanel = ({ sensors, selectedSensorId, onSelect }: MapPanelProps)
       </div>
     )
   }
-
-  const center: [number, number] = [
-    fallbackSensor.location.latitude,
-    fallbackSensor.location.longitude
-  ]
 
   return (
     <div className="panel map-panel">
@@ -85,12 +129,13 @@ export const MapPanel = ({ sensors, selectedSensorId, onSelect }: MapPanelProps)
           minZoom={13}
           className="map-panel__container"
           scrollWheelZoom
+          keyboard={false}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <RecenterOnSelection sensor={fallbackSensor} />
+          <RecenterOnSelection sensor={selectedSensor} />
           {sensors.map((sensor) => {
             const {
               location: { latitude, longitude }

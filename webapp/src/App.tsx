@@ -50,6 +50,13 @@ function App() {
     : []
 
   const handleSelectSensor = (sensorId: string) => {
+    if (sensorId === selectedSensorId) {
+      selectSensor(undefined)
+      setTimeout(() => {
+        selectSensor(sensorId)
+      }, 0)
+      return
+    }
     selectSensor(sensorId)
   }
 
@@ -86,7 +93,7 @@ function App() {
           />
           <UsageAnalyticsPanel
             analytics={analytics}
-            isLoading={analyticsLoading}
+            isLoading={analyticsLoading && !analytics}
             onRefresh={handleRefreshAnalytics}
           />
         </section>
@@ -106,6 +113,7 @@ function App() {
             onResolve={(alertId) => {
               void resolveAlert(alertId)
             }}
+            onFocusSensor={handleSelectSensor}
           />
           <ZoneSnapshotList zones={zones} />
           <LiveFeed events={recentEvents} />

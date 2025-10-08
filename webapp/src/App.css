@@ -123,13 +123,19 @@
 
 .overview-card {
   background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
+  border: none;
   border-radius: var(--radius-md);
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   box-shadow: 0 10px 40px rgba(14, 23, 42, 0.3);
+}
+
+.overview-card__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .overview-card h3 {
@@ -186,12 +192,18 @@
 
 .panel {
   background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
+  border: none;
   border-radius: var(--radius-lg);
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.35);
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+.panel__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .panel__header {
@@ -218,6 +230,20 @@
   gap: 0.75rem;
   flex: 1;
   min-height: 0;
+}
+
+.alert-center__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.5rem;
+}
+
+.zone-panel .panel__body {
+  max-height: 18rem;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .panel__body--empty {
@@ -402,23 +428,17 @@
   color: #64748b;
 }
 
-.sensor-marker {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.sensor-marker-icon {
+  filter: drop-shadow(0 16px 30px rgba(15, 23, 42, 0.55));
+  transition: filter 0.2s ease;
 }
 
-.sensor-marker__dot {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 12px rgba(14, 116, 144, 0.5);
+.sensor-marker-icon svg {
+  display: block;
 }
 
-.sensor-marker--selected .sensor-marker__dot {
-  border-width: 4px;
-  box-shadow: 0 0 18px rgba(56, 189, 248, 0.75);
+.sensor-marker-icon--selected {
+  filter: drop-shadow(0 22px 40px rgba(56, 189, 248, 0.55));
 }
 
 .sensor-details__body {
@@ -621,6 +641,12 @@
   color: #fdba74;
 }
 
+.alert-center {
+  max-height: 28rem;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .alert-center__header {
   flex-direction: row;
   justify-content: space-between;
@@ -664,6 +690,9 @@
   font-size: 0.9rem;
   cursor: pointer;
   transition: border-color 0.2s, transform 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .alert-center__refresh:hover {
@@ -773,6 +802,9 @@
   font-size: 0.85rem;
   cursor: pointer;
   transition: border-color 0.2s, transform 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .alert-item__button:hover {
@@ -805,6 +837,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 600;
+  gap: 0.35rem;
 }
 
 .alert-badge--warning {
@@ -863,6 +896,7 @@
   display: grid;
   gap: 1.25rem;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  min-height: 320px;
 }
 
 .usage-analytics__section {
@@ -904,24 +938,9 @@
   height: 160px;
 }
 
-.usage-analytics__chart svg {
-  width: 100%;
-  height: 100%;
-  stroke: rgba(56, 189, 248, 0.85);
-  fill: none;
-  stroke-width: 2;
-}
-
-.usage-analytics__chart-axis {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  color: var(--muted);
-  font-size: 0.75rem;
-  padding-top: 0.5rem;
+.usage-analytics__chart canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .usage-analytics__chart-empty {
@@ -1060,6 +1079,12 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
+}
+
+.zone-table__heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .zone-table th,

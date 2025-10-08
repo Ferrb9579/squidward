@@ -1,4 +1,13 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, type ReactElement } from 'react'
+import {
+  AlertTriangle,
+  BellRing,
+  CheckCircle2,
+  Clock3,
+  MapPin,
+  OctagonAlert,
+  RefreshCw
+} from 'lucide-react'
 import type { LeakAlert } from '../types'
 
 interface AlertCenterProps {
@@ -7,6 +16,7 @@ interface AlertCenterProps {
   onRefresh: () => void
   onAcknowledge: (alertId: string) => void
   onResolve: (alertId: string) => void
+  onFocusSensor?: (sensorId: string) => void
 }
 
 const timeFormatter = new Intl.DateTimeFormat(undefined, {
@@ -46,6 +56,11 @@ const severityClassName: Record<LeakAlert['severity'], string> = {
   critical: 'alert-badge alert-badge--critical'
 }
 
+const severityIcon: Record<LeakAlert['severity'], ReactElement> = {
+  warning: <AlertTriangle size={14} aria-hidden />,
+  critical: <OctagonAlert size={14} aria-hidden />
+}
+
 const metricLabel: Record<LeakAlert['metric'], string> = {
   flowRateLpm: 'Flow anomaly',
   pressureBar: 'Pressure spike',
@@ -65,17 +80,20 @@ const formatValue = (value?: number, unit?: string) =>
 const AlertList = ({
   items,
   onAcknowledge,
-  onResolve
+  onResolve,
+  onFocusSensor
 }: {
   items: LeakAlert[]
   onAcknowledge: (alertId: string) => void
   onResolve: (alertId: string) => void
+  onFocusSensor?: (sensorId: string) => void
 }) => (
   <ul className="alert-center__list">
     {items.map((alert) => (
       <li key={alert.id} className="alert-item">
         <div className="alert-item__header">
           <span className={severityClassName[alert.severity]}>
+            {severityIcon[alert.severity]}
             {severityLabel[alert.severity]}
           </span>
           <span className="alert-item__metric">{metricLabel[alert.metric]}</span>
@@ -115,12 +133,23 @@ const AlertList = ({
           </dl>
         </div>
         <div className="alert-item__actions">
+          {onFocusSensor && (
+            <button
+              type="button"
+              className="alert-item__button"
+              onClick={() => onFocusSensor(alert.sensorId)}
+            >
+              <MapPin size={14} aria-hidden />
+              View sensor
+            </button>
+          )}
           {!alert.acknowledged && (
             <button
               type="button"
               className="alert-item__button"
               onClick={() => onAcknowledge(alert.id)}
             >
+              <CheckCircle2 size={14} aria-hidden />
               Acknowledge
             </button>
           )}
@@ -130,6 +159,7 @@ const AlertList = ({
               className="alert-item__button alert-item__button--primary"
               onClick={() => onResolve(alert.id)}
             >
+              <Clock3 size={14} aria-hidden />
               Mark resolved
             </button>
           )}
@@ -157,8 +187,11 @@ export const AlertCenter = ({
   isLoading = false,
   onRefresh,
   onAcknowledge,
-  onResolve
+  onResolve,
+  onFocusSensor
 }: AlertCenterProps) => {
+  const rootRef = useRef<HTMLDivElement | null>(null)
+
   const { activeAlerts, recentResolved } = useMemo(() => {
     const activeAlerts = alerts.filter((alert) => !alert.resolvedAt)
     const resolvedAlerts = alerts
@@ -169,11 +202,25 @@ export const AlertCenter = ({
 
   const showEmptyState = !isLoading && activeAlerts.length === 0
 
+  useEffect(() => {
+    const activeElement = (typeof document !== 'undefined'
+      ? document.activeElement
+      : null) as HTMLElement | null
+    if (!activeElement) return
+    if (!rootRef.current) return
+    if (rootRef.current.contains(activeElement) && typeof activeElement.blur === 'function') {
+      activeElement.blur()
+    }
+  }, [alerts])
+
   return (
-    <div className="panel alert-center">
+    <div ref={rootRef} className="panel alert-center">
       <div className="panel__header alert-center__header">
         <div>
-          <h2>Leak alerts</h2>
+          <h2 className="panel__title">
+            <BellRing size={18} aria-hidden />
+            Leak alerts
+          </h2>
           <p className="panel__subtext">
             Monitoring anomalies reported by the detection service.
           </p>
@@ -188,6 +235,7 @@ export const AlertCenter = ({
             onClick={onRefresh}
             aria-label="Refresh alerts"
           >
+            <RefreshCw size={16} aria-hidden />
             Refresh
           </button>
         </div>
@@ -206,6 +254,7 @@ export const AlertCenter = ({
             items={activeAlerts.length > 0 ? activeAlerts : recentResolved}
             onAcknowledge={onAcknowledge}
             onResolve={onResolve}
+            onFocusSensor={onFocusSensor}
           />
         )}
         {activeAlerts.length > 0 && recentResolved.length > 0 && (
@@ -215,6 +264,7 @@ export const AlertCenter = ({
               items={recentResolved}
               onAcknowledge={onAcknowledge}
               onResolve={onResolve}
+              onFocusSensor={onFocusSensor}
             />
           </div>
         )}

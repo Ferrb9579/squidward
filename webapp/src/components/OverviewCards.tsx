@@ -1,3 +1,4 @@
+import { Activity, Clock3, GaugeCircle, ShieldCheck } from 'lucide-react'
 import type { OverviewMetrics, StreamStatus } from '../types'
 
 interface OverviewCardsProps {
@@ -41,28 +42,40 @@ export const OverviewCards = ({ overview, lastCycleAt, streamStatus }: OverviewC
       </div>
       <div className="overview__grid">
         <article className="overview-card">
-          <h3>Total sensors</h3>
+          <h3 className="overview-card__title">
+            <GaugeCircle size={18} aria-hidden />
+            Total sensors
+          </h3>
           <p className="overview-card__value">
             {overview ? numberFormatter.format(overview.totalSensors) : '—'}
           </p>
           <p className="overview-card__meta">Active {overview ? overview.activeSensors : '—'}</p>
         </article>
         <article className="overview-card">
-          <h3>Leak alerts (1h)</h3>
+          <h3 className="overview-card__title">
+            <ShieldCheck size={18} aria-hidden />
+            Leak alerts (1h)
+          </h3>
           <p className="overview-card__value accent">
             {overview ? overview.leakAlertsLastHour : '—'}
           </p>
           <p className="overview-card__meta">Driven by anomaly detection on live flow.</p>
         </article>
         <article className="overview-card">
-          <h3>Health score</h3>
+          <h3 className="overview-card__title">
+            <Activity size={18} aria-hidden />
+            Health score
+          </h3>
           <p className="overview-card__value">
             {overview?.averageHealthScore ?? '—'}
           </p>
           <p className="overview-card__meta">Composite of battery, stability, and leak signals.</p>
         </article>
         <article className="overview-card">
-          <h3>Last update</h3>
+          <h3 className="overview-card__title">
+            <Clock3 size={18} aria-hidden />
+            Last update
+          </h3>
           <p className="overview-card__value">{formatTime(lastCycleAt)}</p>
           <p className="overview-card__meta">Refreshes automatically with simulator cycles.</p>
         </article>

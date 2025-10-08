@@ -1,3 +1,4 @@
+import { Activity, Droplets, HeartPulse, Layers, Users } from 'lucide-react'
 import type { ZoneSnapshot } from '../types'
 
 interface ZoneSnapshotListProps {
@@ -17,17 +18,40 @@ export const ZoneSnapshotList = ({ zones }: ZoneSnapshotListProps) => {
   return (
     <div className="panel zone-panel">
       <div className="panel__header">
-        <h2>Zones</h2>
+        <h2 className="panel__title">
+          <Layers size={18} aria-hidden />
+          Zones
+        </h2>
         <p className="panel__subtext">High-level pulse of campus distribution.</p>
       </div>
       <div className="panel__body">
         <table className="zone-table">
           <thead>
             <tr>
-              <th>Zone</th>
-              <th>Sensors</th>
-              <th>Active</th>
-              <th>Health</th>
+              <th>
+                <span className="zone-table__heading">
+                  <Droplets size={16} aria-hidden />
+                  Zone
+                </span>
+              </th>
+              <th>
+                <span className="zone-table__heading">
+                  <Users size={16} aria-hidden />
+                  Sensors
+                </span>
+              </th>
+              <th>
+                <span className="zone-table__heading">
+                  <Activity size={16} aria-hidden />
+                  Active
+                </span>
+              </th>
+              <th>
+                <span className="zone-table__heading">
+                  <HeartPulse size={16} aria-hidden />
+                  Health
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>
