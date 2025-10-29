@@ -27,7 +27,7 @@ import {
   markAlertAcknowledged,
   markAlertResolved
 } from '../services/leakAlertService'
-import { getUsageAnalytics } from '../services/analyticsService'
+import { getInsightAnalytics, getUsageAnalytics } from '../services/analyticsService'
 import {
   createApiKey,
   deleteApiKey,
@@ -45,7 +45,8 @@ const agentRoutes = [
   { path: '/automations', description: 'Manage automation rules for each sensor' },
   { path: '/automations?create=true', description: 'Open the automation form to create a new rule' },
   { path: '/alerts/simulate', description: 'Trigger a manual leak alert for testing notifications' },
-  { path: '/api-keys', description: 'Manage ingestion API keys' }
+  { path: '/api-keys', description: 'Manage ingestion API keys' },
+  { path: '/analytics', description: 'Exploratory analytics with ML insights and evaluation' }
 ] as const
 
 type AsyncHandler = (req: Request, res: Response) => Promise<void>
@@ -609,6 +610,14 @@ api.get(
   asyncHandler(async (_req, res) => {
     const analytics = await getUsageAnalytics()
     res.json({ analytics })
+  })
+)
+
+api.get(
+  '/analytics/insights',
+  asyncHandler(async (_req, res) => {
+    const insights = await getInsightAnalytics()
+    res.json({ insights })
   })
 )
 

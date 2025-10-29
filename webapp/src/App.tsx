@@ -5,6 +5,7 @@ import ApiKeysPage from './pages/ApiKeysPage'
 import AutomationsPage from './pages/AutomationsPage'
 import AlertSimulatorPage from './pages/AlertSimulatorPage'
 import AgentAssistant from './components/AgentAssistant'
+import AnalyticsPage from './pages/AnalyticsPage'
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
@@ -27,6 +28,9 @@ function App() {
             <NavLink to="/" className={navLinkClass} end>
               Dashboard
             </NavLink>
+            <NavLink to="/analytics" className={navLinkClass}>
+              Analytics
+            </NavLink>
             <NavLink to="/sensors/new" className={navLinkClass}>
               Create sensor
             </NavLink>
@@ -45,6 +49,7 @@ function App() {
   <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-10">
         <Routes>
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/sensors/new" element={<CreateSensorPage />} />
           <Route path="/automations" element={<AutomationsPage />} />
           <Route path="/alerts/simulate" element={<AlertSimulatorPage />} />

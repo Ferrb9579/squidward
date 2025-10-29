@@ -140,6 +140,90 @@ export interface UsageAnalytics {
   lowReservoirs: ExtremeMeasurement[]
 }
 
+export interface MetricSummary {
+  sampleSize: number
+  mean: number
+  median: number
+  min: number
+  max: number
+  stdDev: number
+  p25: number
+  p75: number
+}
+
+export interface CorrelationSummary {
+  from: string
+  to: string
+  coefficient: number
+  sampleSize: number
+}
+
+export interface AnalyticsTimeseriesPoint {
+  timestamp: Date
+  sampleCount: number
+  flowRateLpm?: number
+  pressureBar?: number
+  levelPercent?: number
+  temperatureCelsius?: number
+}
+
+export interface ZoneAggregate {
+  zoneId: string
+  zoneName: string
+  sampleCount: number
+  avgFlowLpm?: number
+  avgPressureBar?: number
+  avgLevelPercent?: number
+}
+
+export interface RegressionPrediction {
+  sensorId: string
+  sensorName: string
+  zone: SensorZone
+  timestamp: Date
+  actual: number
+  predicted: number
+  residual: number
+}
+
+export interface FeatureImportanceEntry {
+  feature: string
+  weight: number
+  importance: number
+}
+
+export interface RegressionModelSummary {
+  target: string
+  features: string[]
+  intercept: number
+  coefficients: Record<string, number>
+  trainingSamples: number
+  validationSamples: number
+  evaluation: {
+    mae: number
+    rmse: number
+    r2: number
+  }
+  featureScaling: Record<string, { mean: number; stdDev: number }>
+  featureImportance: FeatureImportanceEntry[]
+  predictions: RegressionPrediction[]
+  outliers: RegressionPrediction[]
+  lastUpdated: Date
+}
+
+export interface AdvancedAnalytics {
+  windowStart: Date
+  windowEnd: Date
+  sampleCount: number
+  eda: {
+    metrics: Record<string, MetricSummary>
+    correlations: CorrelationSummary[]
+    zoneAverages: ZoneAggregate[]
+  }
+  timeseries: AnalyticsTimeseriesPoint[]
+  model?: RegressionModelSummary
+}
+
 export interface ApiKey {
   id: string
   label: string
